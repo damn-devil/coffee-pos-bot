@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: coffee-pos-bot
+    runtime: docker
+    plan: free
+    dockerfilePath: Dockerfile
+    envVars:
+      BOT_TOKEN:
+        sync: false
+      DATABASE_URL:
+        sync: false
+      BARISTA_CHAT_IDS:
+        sync: false
+      MINI_APP_MENU_URL:
+        sync: false
+      MINI_APP_ORDERS_URL:
+        sync: false
+      WEBHOOK_URL:
+        sync: false
+      WEBHOOK_SECRET:
+        sync: false
+      PORT:
+        value: 3000
+      MENU_URL:
+        sync: false
