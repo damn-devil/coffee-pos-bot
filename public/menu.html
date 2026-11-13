@@ -260,9 +260,9 @@ async function loadMenu() {
 
 function renderCats() {
   const c = $('cats');
-  let html = '<button class="cat active" data-cat="all">Всё меню</button>';
+  let html = `<button class="cat ${activeCat === 'all' ? 'active' : ''}" data-cat="all">Всё меню</button>`;
   for (const cat of menu.categories || []) {
-    html += `<button class="cat" data-cat="${cat.id}">${cat.emoji} ${cat.name}</button>`;
+    html += `<button class="cat ${activeCat === cat.id ? 'active' : ''}" data-cat="${cat.id}">${cat.emoji} ${cat.name}</button>`;
   }
   c.innerHTML = html;
   c.querySelectorAll('.cat').forEach((b) => b.addEventListener('click', () => { activeCat = b.dataset.cat; renderCats(); renderList(); }));
