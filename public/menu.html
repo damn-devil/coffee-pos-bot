@@ -10,250 +10,6 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); height:100dvh; overflow:hidden; display:flex; flex-direction:column; }
-  #app { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:12px; padding-bottom:90px; }
-  .header { display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px 16px; }
-  .title { font-size:17px; font-weight:800; background:linear-gradient(to right,var(--accent),#fff); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-  .cart-btn { position:relative; background:var(--surface-lift); border:1px solid var(--border); border-radius:12px; width:48px; height:48px; color:var(--text); font-size:20px; }
-  .badge { position:absolute; top:-4px; right:-4px; min-width:20px; height:20px; padding:0 5px; background:var(--accent); color:#000; border-radius:10px; font-size:11px; font-weight:800; display:none; align-items:center; justify-content:center; border:2px solid var(--surface); }
-  .badge.show { display:flex; }
-  .cats { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
-  .cats::-webkit-scrollbar { display:none; }
-  .cat { padding:8px 14px; background:var(--surface-lift); border:1px solid var(--border); border-radius:20px; color:var(--muted); font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; }
-  .cat.active { background:var(--accent); color:#000; border-color:var(--accent); }
-  .card { display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; }
-  .card .emoji { font-size:30px; width:54px; height:54px; display:flex; align-items:center; justify-content:center; background:var(--surface-lift); border-radius:12px; flex:0 0 auto; }
-  .card .info { flex:1; min-width:0; }
-  .card .name { font-size:15px; font-weight:800; }
-  .card .desc { font-size:12px; color:var(--muted); margin-top:2px; }
-  .card .price { font-size:14px; font-weight:800; margin-top:4px; color:var(--accent); }
-  .stepper { display:flex; align-items:center; gap:10px; }
-  .stepper button { width:32px; height:32px; border-radius:10px; border:1px solid var(--border); background:var(--surface-lift); color:var(--text); font-size:18px; font-weight:800; }
-  .stepper span { min-width:20px; text-align:center; font-weight:800; }
-  .cart-bar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .cart-bar .total { font-size:16px; font-weight:800; }
-  .btn { border:none; border-radius:14px; padding:14px 18px; font-size:15px; font-weight:800; cursor:pointer; background:var(--accent); color:#000; width:100%; }
-  .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
-  .hidden { display:none !important; }
-  #checkout, #success { position:fixed; inset:0; background:rgba(0,0,0,.8); display:flex; align-items:flex-end; z-index:50; }
-  #checkout.open, #success.open { display:flex; }
-  .sheet { background:var(--bg); width:100%; border-radius:20px 20px 0 0; padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:12px; max-height:85%; overflow-y:auto; }
-  .sheet h3 { font-size:17px; font-weight:800; }
-  .opt { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px; font-size:14px; font-weight:700; }
-  .opt input { accent-color: var(--accent); }
-  .chips { display:flex; gap:8px; flex-wrap:wrap; }
-  .chip { padding:10px 14px; border-radius:12px; background:var(--surface-lift); border:1px solid var(--border); color:var(--text); font-weight:800; font-size:14px; }
-  .chip.active { background:var(--accent); color:#000; border-color:var(--accent); }
-</style>
-</head>
-<body>
-<div id="app">
-  <div class="header">
-    <div class="title">☕ Coffee POS</div>
-    <button class="cart-btn" id="cart-btn">🛒<span class="badge" id="cart-badge">0</span></button>
-  </div>
-  <div id="cats" class="cats"></div>
-  <div id="list" class="app"></div>
-</div>
-
-<div id="cart-bar" class="cart-bar hidden">
-  <div class="total" id="cart-total">0 Br</div>
-  <button class="btn" id="cart-checkout-btn">Оформить заказ</button>
-</div>
-
-<div id="checkout">
-  <div class="sheet">
-    <h3>Оформление заказа</h3>
-    <div id="checkout-summary"></div>
-    <div class="opt"><input type="radio" name="pay" value="card" checked /> Оплата картой</div>
-    <div class="opt"><input type="radio" name="pay" value="cash" /> Оплата наличными</div>
-    <div id="cash-wrap" class="hidden">
-      <input id="cash-input" inputmode="decimal" placeholder="Сколько дать наличными" style="width:100%; padding:12px; border-radius:12px; background:var(--surface-lift); border:1px solid var(--border); color:var(--text); font-size:16px;" />
-    </div>
-    <div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">Когда будет готов?</div>
-      <div class="chips" id="eta-chips"></div>
-    </div>
-    <button class="btn" id="order-submit">Отправить заказ</button>
-  </div>
-</div>
-
-<div id="success">
-  <div class="sheet">
-    <h3>✅ Заказ оформлен</h3>
-    <p style="color:var(--muted);font-size:14px;">Бариста получил уведомление и скоро начнёт готовить.</p>
-    <button class="btn" id="success-close">Готово</button>
-  </div>
-</div>
-
-<script>
-const tg = window.Telegram && window.Telegram.WebApp;
-const $ = (id) => document.getElementById(id);
-
-let menu = { categories: [], products: [] };
-let cart = [];
-let activeCat = 'all';
-let payment = 'card';
-let cash = 0;
-let etaMinutes = 15;
-
-function money(n) { return Number(n || 0).toLocaleString('ru-RU') + ' Br'; }
-
-tg.ready();
-tg.setHeaderColor('#0a0a0a');
-tg.setBackgroundColor('#0a0a0a');
-if (tg.expand) tg.expand();
-
-async function api(path, opts) { const r = await fetch(path, opts); return r.json(); }
-
-async function loadMenu() {
-  menu = await api('/api/menu');
-  renderCats();
-  renderList();
-}
-
-function renderCats() {
-  const c = $('cats');
-  let html = '<button class="cat active" data-cat="all">Все</button>';
-  for (const cat of menu.categories || []) {
-    html += `<button class="cat" data-cat="${cat.id}">${cat.emoji} ${cat.name}</button>`;
-  }
-  c.innerHTML = html;
-  c.querySelectorAll('.cat').forEach((b) => {
-    b.addEventListener('click', () => { activeCat = b.dataset.cat; renderCats(); renderList(); });
-  });
-}
-
-function detailedCart() {
-  return cart
-    .map((c) => ({ ...c, product: (menu.products || []).find((p) => p.id === c.productId) }))
-    .filter((c) => c.product);
-}
-
-function cartTotal() { return detailedCart().reduce((sum, c) => sum + c.product.price * c.qty, 0); }
-
-function renderList() {
-  const list = $('list');
-  const products = activeCat === 'all' ? (menu.products || []) : (menu.products || []).filter((p) => p.category === activeCat);
-  if (!products.length) { list.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center;">Меню пусто</div>'; return; }
-  list.innerHTML = products.map((p) => {
-    const entry = cart.find((c) => c.productId === p.id);
-    const qty = entry ? entry.qty : 0;
-    return `<div class="card">
-      <div class="emoji">${p.emoji}</div>
-      <div class="info">
-        <div class="name">${p.name}</div>
-        <div class="desc">${p.desc || ''}</div>
-        <div class="price">${money(p.price)}</div>
-      </div>
-      <div class="stepper">
-        ${qty > 0 ? `<button data-act="minus" data-id="${p.id}">−</button><span>${qty}</span><button data-act="plus" data-id="${p.id}">+</button>` : `<button data-act="plus" data-id="${p.id}">+</button>`}
-      </div>
-    </div>`;
-  }).join('');
-  list.querySelectorAll('[data-act]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.id;
-      const act = btn.dataset.act;
-      const product = (menu.products || []).find((p) => p.id === id);
-      if (!product) return;
-      if (act === 'plus') addToCart(product);
-      else if (act === 'minus') changeQty(id, -1);
-    });
-  });
-}
-
-function addToCart(product) {
-  const existing = cart.find((c) => c.productId === product.id);
-  if (existing) existing.qty += 1;
-  else cart.push({ productId: product.id, qty: 1, price: product.price, name: product.name, emoji: product.emoji });
-  renderList();
-  renderCartBar();
-}
-
-function changeQty(productId, delta) {
-  const entry = cart.find((c) => c.productId === productId);
-  if (!entry) return;
-  entry.qty += delta;
-  if (entry.qty <= 0) cart = cart.filter((c) => c.productId !== productId);
-  renderList();
-  renderCartBar();
-}
-
-function renderCartBar() {
-  const total = cartTotal();
-  const count = cart.reduce((s, c) => s + c.qty, 0);
-  $('cart-total').textContent = money(total);
-  $('cart-badge').textContent = count;
-  $('cart-badge').classList.toggle('show', count > 0);
-  if (cart.length) { $('cart-bar').classList.remove('hidden'); } else { $('cart-bar').classList.add('hidden'); }
-}
-
-function renderCartPanel() {
-  const detailed = detailedCart();
-  const total = cartTotal();
-  $('checkout-summary').innerHTML = detailed.map((c) => `
-    <div class="opt"><span>${c.emoji} ${c.qty}× ${c.name}</span><b>${money(c.product.price * c.qty)}</b></div>
-  `).join('') + `<div class="opt"><b>Итого</b><b>${money(total)}</b></div>`;
-  $('cart-bar').classList.add('hidden');
-}
-
-function openCheckout() {
-  renderCartPanel();
-  $('cash-input').value = String(cartTotal());
-  $('cash-wrap').classList.toggle('hidden', payment !== 'cash');
-  const chips = $('eta-chips');
-  chips.innerHTML = [5, 10, 15, 20, 30].map((m) => `<button class="chip ${etaMinutes === m ? 'active' : ''}" data-eta="${m}">${m} мин</button>`).join('');
-  chips.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => { etaMinutes = Number(b.dataset.eta); chips.querySelectorAll('.chip').forEach(x => x.classList.remove('active')); b.classList.add('active'); }));
-  $('checkout').classList.add('open');
-}
-
-function closeCheckout() { $('checkout').classList.remove('open'); }
-
-function submitOrder() {
-  const detailed = detailedCart();
-  if (!detailed.length) { return; }
-  const payload = {
-    items: detailed.map((c) => ({ productId: c.productId, qty: c.qty })),
-    payment,
-    cash: payment === 'cash' ? (Number($('cash-input').value.replace(',', '.')) || cartTotal()) : 0,
-    etaMinutes,
-  };
-  tg.sendData(JSON.stringify(payload));
-  $('checkout').classList.remove('open');
-}
-
-function showSuccess() { $('success').classList.add('open'); }
-function closeSuccess() { $('success').classList.remove('open'); }
-
-$('cart-btn').addEventListener('click', () => { if (cart.length) renderCartPanel(); });
-$('cart-checkout-btn').addEventListener('click', openCheckout);
-$('order-submit').addEventListener('click', submitOrder);
-$('success-close').addEventListener('click', closeSuccess);
-$('checkout').addEventListener('click', (e) => { if (e.target === $('checkout')) closeCheckout(); });
-
-$('cash-wrap') ... 
-```
-
-Hmm — payment radios need change handler:
-```js
-$('cash-wrap'); document.querySelectorAll('input[name="pay"]').forEach(r => r.addEventListener('change', (e) => { payment = e.target.value; document.querySelectorAll('input[name="pay"]').forEach(x => x.checked = x === e.target); $('cash-wrap').classList.toggle('hidden', payment !== 'cash'); }));
-```
-
-OK. Enough — I'll write final HTML in the write call.
-
-Now write both public files.</think>Теперь пишу клиентскую Mini App (меню → корзина → заказ) и панель бариста (список заказов + обратный отсчёт).<tool_call>write<arg_key>content</arg_key><arg_value><!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>Coffee POS — Меню</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  :root { --bg:#0a0a0a; --surface:#141414; --surface-lift:#1e1e1e; --border:#2a2a2a; --text:#ffffff; --muted:#9a9a9a; --accent:#d4c4a8; }
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { height:100%; }
-  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); height:100dvh; overflow:hidden; display:flex; flex-direction:column; }
   #app { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:12px; padding-bottom:96px; }
   .header { display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px 16px; }
   .title { font-size:17px; font-weight:800; background:linear-gradient(to right,var(--accent),#fff); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
@@ -324,7 +80,7 @@ Now write both public files.</think>Теперь пишу клиентскую M
 <div id="success">
   <div class="sheet">
     <h3>✅ Заказ оформлен</h3>
-    <p style="color:var(--muted);font-size:14px;">Бариста получил уведомление и скоро начнёт готовить.</p>
+    <p style="color:var(--muted);font-size:14px;">Бариста получил уведомление и скоро начнёт готовить. Номер заказа придёт вам в чат.</p>
     <button class="btn" id="success-close">Готово</button>
   </div>
 </div>
@@ -342,15 +98,22 @@ let etaMinutes = 15;
 
 function money(n) { return Number(n || 0).toLocaleString('ru-RU') + ' Br'; }
 
-tg.ready();
-tg.setHeaderColor('#0a0a0a');
-tg.setBackgroundColor('#0a0a0a');
-if (tg.expand) tg.expand();
+if (tg) {
+  tg.ready();
+  tg.expand && tg.expand();
+  if (tg.setHeaderColor) tg.setHeaderColor('#0a0a0a');
+  if (tg.setBackgroundColor) tg.setBackgroundColor('#0a0a0a');
+}
 
 async function api(path, opts) { const r = await fetch(path, opts); return r.json(); }
 
 async function loadMenu() {
-  menu = await api('/api/menu');
+  try {
+    menu = await api('/api/menu');
+  } catch (e) {
+    $('list').innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center;">Не удалось загрузить меню. Проверьте соединение.</div>';
+    return;
+  }
   renderCats();
   renderList();
 }
@@ -456,6 +219,9 @@ function openCheckout() {
 
 function closeCheckout() { $('checkout').classList.remove('open'); }
 
+function showSuccess() { $('success').classList.add('open'); }
+function closeSuccess() { $('success').classList.remove('open'); }
+
 function submitOrder() {
   const detailed = detailedCart();
   if (!detailed.length) return;
@@ -465,25 +231,24 @@ function submitOrder() {
     cash: payment === 'cash' ? (Number(String($('cash-input').value).replace(',', '.')) || cartTotal()) : 0,
     etaMinutes,
   };
-  tg.sendData(JSON.stringify(payload));
-  closeCheckout();
-  showSuccess();
+  if (tg && tg.sendData) {
+    tg.sendData(JSON.stringify(payload));
+    closeCheckout();
+    showSuccess();
+  } else {
+    closeCheckout();
+    $('checkout-summary').innerHTML = '<div class="opt"><b>Открывайте меню в Telegram — там заказ уйдёт баристам.</b></div>';
+    $('success').classList.add('open');
+  }
 }
-
-function showSuccess() { $('success').classList.add('open'); }
-function closeSuccess() { $('success').classList.remove('open'); }
 
 $('cart-btn').addEventListener('click', () => { if (cart.length) renderCartPanel(); });
 $('cart-checkout-btn').addEventListener('click', openCheckout);
 $('order-submit').addEventListener('click', submitOrder);
-$('success-close').addEventListener('click', closeSuccess);
+$('success-close').addEventListener('click', () => { closeSuccess(); if (tg && tg.close) tg.close(); });
 
-document.addEventListener('click', (e) => {
-  if (e.target && e.target.id === 'checkout') closeCheckout();
-});
-document.addEventListener('click', (e) => {
-  if (e.target && e.target.id === 'success') closeSuccess();
-});
+document.addEventListener('click', (e) => { if (e.target && e.target.id === 'checkout') closeCheckout(); });
+document.addEventListener('click', (e) => { if (e.target && e.target.id === 'success') closeSuccess(); });
 
 document.querySelectorAll('input[name="pay"]').forEach((r) => {
   r.addEventListener('change', (e) => {
@@ -494,9 +259,8 @@ document.querySelectorAll('input[name="pay"]').forEach((r) => {
 });
 
 (function init() {
-  loadMenu();
-  // предзаполнение ETA по умолчанию
   etaMinutes = 15;
+  loadMenu();
 })();
 </script>
 </body>
