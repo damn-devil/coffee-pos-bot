@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Coffee POS — Заказы</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { --bg:#0a0a0a; --surface:#141414; --surface-lift:#1e1e1e; --border:#2a2a2a; --text:#ffffff; --muted:#9a9a9a; --accent:#d4c4a8; --success:#4ade80; --danger:#ff6b6b; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); height:100dvh; overflow:hidden; display:flex; flex-direction:column; }
+  .header { background:var(--surface); border-bottom:1px solid var(--border); padding:14px 16px; }
+  .header h1 { font-size:18px; font-weight:800; }
+  .header p { font-size:12px; color:var(--muted); margin-top:2px; }
+  .list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:12px; padding-bottom:20px; }
+  .order { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:8px; }
+  .order.due { border-color: var(--danger); }
+  .order .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .order .num { font-size:18px; font-weight:800; }
+  .status { font-size:11px; font-weight:800; padding:4px 10px; border-radius:12px; background:var(--surface-lift); color:var(--muted); }
+  .status.preparing { color:#fbbf24; }
+  .status.ready { color:var(--success); }
+  .order .items { font-size:13px; color:var(--muted); }
+  .order .meta { display:flex; justify-content:space-between; font-size:13px; }
+  .countdown { display:flex; align-items:center; justify-content:space-between; background:var(--surface-lift); border-radius:12px; padding:10px 12px; font-size:13px; font-weight:700; }
+  .countdown .time { font-size:20px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--accent); }
+  .countdown.due .time { color:var(--danger); }
+  .countdown.due { border:1px solid var(--danger); }
+  .btn { border:none; border-radius:14px; padding:14px; font-size:15px; font-weight:800; cursor:pointer; background:var(--accent); color:#000; width:100%; }
+  .empty { text-align:center; color:var(--muted); padding:40px 20px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📋 Заказы бариста</h1>
+  <p>Список активных заказов по времени готовности</p>
+</div>
+<div id="list" class="list"></div>
+
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+const $ = (id) => document.getElementById(id);
+
+let orders = [];
+let timer = null;
+
+tg.ready();
+tg.setHeaderColor('#0a0a0a');
+tg.setBackgroundColor('#0a0a0a');
+if (tg.expand) tg.expand();
+
+function money(n) { return Number(n || 0).toLocaleString('ru-RU') + ' Br'; }
+function fmtTime(ms) { const d = new Date(ms); const m = String(d.getHours()).padStart(2,'0'); const s = String(d.getMinutes()).padStart(2,'0'); return `${m}:${s}`; }
+function fmtCountdown(ms) { const t = Math.max(0, Math.floor(ms / 1000)); const m = String(Math.floor(t/60)).padStart(2,'0'); const s = String(t % 60).padStart(2,'0'); return `${m}:${s}`; }
+
+async function api(path, opts) { const r = await fetch(path, opts); return r.json(); }
+
+async function loadOrders() {
+  const data = await api('/api/orders');
+  orders = Array.isArray(data) ? data : [];
+  renderOrders();
+}
+
+function renderOrders() {
+  const list = $('list');
+  if (!orders.length) { list.innerHTML = '<div class="empty">Активных заказов нет.<br/>Новые заказы появятся здесь.</div>'; return; }
+  list.innerHTML = [...orders].sort((a, b) => a.readyAt - b.readyAt).map((o) => {
+    const remaining = o.readyAt - Date.now();
+    const due = remaining <= 0;
+    const statusClass = o.status === 'ready' ? 'ready' : (o.status === 'preparing' ? 'preparing' : '');
+    const items = o.items.map((i) => `${i.qty}× ${i.name}`).join(', ');
+    return `
+      <div class="order ${due && o.status !== 'ready' ? 'due' : ''}">
+        <div class="top">
+          <div class="num">№${o.number}</div>
+          <div class="status ${statusClass}">${o.status === 'new' ? 'Новый' : (o.status === 'preparing' ? 'Готовится' : 'Готов')}</div>
+        </div>
+        <div class="items">${items}</div>
+        <div class="meta"><span>Итого: ${money(o.total)}</span><span>Оплата: ${o.payment === 'cash' ? 'Наличные' : 'Карта'}</span></div>
+        <div class="countdown ${due && o.status !== 'ready' ? 'due' : ''}">
+          <span>Готов к выдаче через</span>
+          <span class="time" data-countdown-for="${o.number}">${fmtCountdown(remaining)}</span>
+        </div>
+        ${o.status === 'new' || o.status === 'preparing' ? `<button class="btn" data-action="ready" data-id="${o.number}">Выдать заказ</button>` : ''}
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-action="ready"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.dataset.id);
+      await api(`/api/orders/${id}/ready`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      await loadOrders();
+    });
+  });
+}
+
+function tick() {
+  document.querySelectorAll('[data-countdown-for]').forEach((el) => {
+    const id = Number(el.dataset.countdownFor);
+    const order = orders.find((o) => o.number === id);
+    if (!order) return;
+    const remaining = order.readyAt - Date.now();
+    el.textContent = fmtCountdown(remaining);
+    const card = el.closest('.order');
+    if (card) card.classList.toggle('due', remaining <= 0 && order.status !== 'ready');
+  });
+}
+
+async function init() {
+  await loadOrders();
+  if (orders.length) {
+    timer = setInterval(tick, 1000);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
