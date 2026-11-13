@@ -21,6 +21,10 @@ export function createApp(): Express {
     }
   });
 
+  app.get('/health', (_req: Request, res: Response) => {
+    res.json({ ok: true, service: 'coffee-pos-bot', time: Date.now() });
+  });
+
   app.get('/api/menu', async (_req: Request, res: Response) => {
     const menu = await getMenu();
     res.json(menu);
