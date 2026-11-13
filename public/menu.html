@@ -74,14 +74,16 @@
   .hero p { font-size:11px; color:#d9b795; margin-top:4px; font-weight:600; letter-spacing:.03em; }
 
   /* ===== Categories ===== */
-  .cats { display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; scrollbar-width:none; }
+  .cats { display:flex; gap:8px; overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; margin:2px -14px 0; padding:8px 14px 14px; scrollbar-width:none; }
   .cats::-webkit-scrollbar { display:none; }
   .cat {
-    padding:10px 16px; border:none; border-radius:100px; background:var(--card);
-    color:var(--muted); font-family:'Manrope'; font-weight:800; font-size:12.5px; white-space:nowrap;
-    box-shadow: var(--shadow-sm); transition: all .18s;
+    flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; min-height:44px;
+    padding:10px 17px; border:1.5px solid rgba(44,26,16,.10); border-radius:16px;
+    background:var(--card); color:var(--ink); font-family:'Manrope'; font-weight:800; font-size:13px;
+    white-space:nowrap; cursor:pointer; transition: all .18s;
   }
-  .cat.active { background:var(--espresso); color:#f6e8d8; box-shadow: 0 6px 16px rgba(44,26,16,.35); }
+  .cat:active { transform:scale(.95); }
+  .cat.active { background:var(--terra); border-color:var(--terra-deep); color:#fff; box-shadow: 0 6px 16px rgba(196,83,42,.4); }
 
   /* ===== Product cards ===== */
   .card {
