@@ -98,6 +98,10 @@
     display:flex; align-items:center; justify-content:center;
     box-shadow: inset 0 -3px 6px rgba(44,26,16,.08);
   }
+  .pic {
+    width:62px; height:62px; border-radius:18px; flex:0 0 auto; object-fit:cover;
+    background: var(--paper-deep); box-shadow: var(--shadow-sm); border:1px solid rgba(44,26,16,.10);
+  }
   .card .info { flex:1; min-width:0; }
   .card .name { font-family:'Fraunces',serif; font-weight:700; font-size:15.5px; color:var(--espresso); }
   .card .desc { font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.35; }
@@ -236,6 +240,7 @@ let cash = 0;
 let etaMinutes = 15;
 
 function money(n) { return Number(n || 0).toLocaleString('ru-RU') + ' Br'; }
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 if (tg) {
   tg.ready();
@@ -280,8 +285,11 @@ function renderList() {
   list.innerHTML = products.map((p) => {
     const entry = cart.find((c) => c.productId === p.id);
     const qty = entry ? entry.qty : 0;
+    const visual = p.image
+      ? `<img class="pic" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="emoji" style="display:none">${p.emoji || '☕'}</div>`
+      : `<div class="emoji">${p.emoji || '☕'}</div>`;
     return `<div class="card">
-      <div class="emoji">${p.emoji}</div>
+      ${visual}
       <div class="info">
         <div class="name">${p.name}</div>
         <div class="desc">${p.desc || ''}</div>

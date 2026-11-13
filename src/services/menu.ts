@@ -9,6 +9,7 @@ export interface Product {
   price: number;
   desc: string;
   emoji: string;
+  image?: string;
 }
 
 export interface Menu {
@@ -38,6 +39,24 @@ const DEFAULT_MENU: Menu = {
   ],
 };
 
+function menuBaseUrl(): string {
+  const i = env.MENU_URL.lastIndexOf('/');
+  return i > 0 ? env.MENU_URL.slice(0, i + 1) : env.MENU_URL;
+}
+
+function resolveImageUrl(image: unknown): string | undefined {
+  if (typeof image !== 'string') return undefined;
+  const src = image.trim();
+  if (!src) return undefined;
+  if (/^data:/i.test(src)) return src;
+  if (/^https?:\/\//i.test(src)) return src;
+  try {
+    return new URL(src, menuBaseUrl()).toString();
+  } catch {
+    return undefined;
+  }
+}
+
 let cache: Menu | null = null;
 let cacheAt = 0;
 
@@ -56,7 +75,12 @@ export async function getMenu(): Promise<Menu> {
       if (Array.isArray(data.products)) {
         cache = {
           categories: Array.isArray(data.categories) ? data.categories : [],
-          products: data.products.filter((p) => !!p && typeof p.id === 'string' && typeof p.name === 'string'),
+          products: data.products
+            .filter((p) => !!p && typeof p.id === 'string' && typeof p.name === 'string')
+            .map((p) => ({
+              ...p,
+              image: resolveImageUrl((p as { image?: unknown }).image),
+            })),
         };
         cacheAt = now;
         return cache;
