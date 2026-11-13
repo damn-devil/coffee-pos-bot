@@ -1,18 +1,19 @@
-FROM node:22-alpine
+FROM node:22-bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY package.json package-lock.json* pnpm-lock.yaml* ./
-RUN corepack enable && pnpm install --frozen-lockfile 2>/dev/null || pnpm install
-
+COPY package.json pnpm-lock.yaml* ./
 COPY prisma ./prisma
-RUN DATABASE_URL="file:./dev.db" npx prisma generate
+
+RUN corepack enable && pnpm install --frozen-lockfile 2>/dev/null || pnpm install
 
 COPY public ./public
 COPY src ./src
 COPY tsconfig.json ./
 
-RUN npx tsc -p tsconfig.json
+RUN npx prisma generate && npx tsc -p tsconfig.json
 
 EXPOSE 3000
 
