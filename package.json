@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Telegram-бот + Mini App для кофейни: меню, заказы, уведомления баристе, таймеры",
+  "description": "Telegram-\u0431\u043e\u0442 + Mini App \u0434\u043b\u044f \u043a\u043e\u0444\u0435\u0439\u043d\u0438: \u043c\u0435\u043d\u044e, \u0437\u0430\u043a\u0430\u0437\u044b, \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f \u0431\u0430\u0440\u0438\u0441\u0442\u0435, \u0442\u0430\u0439\u043c\u0435\u0440\u044b",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
@@ -24,5 +24,13 @@
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "esbuild"
+    ]
   }
 }
