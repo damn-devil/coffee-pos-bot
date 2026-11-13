@@ -39,6 +39,8 @@ export function registerStartHandlers(): void {
 
   bot.command('widget', async (ctx) => {
     const chatId = ctx.chat?.id;
+    const chatType = ctx.chat?.type;
+    console.error(`/widget called: chat_id=${chatId} type=${chatType} from_id=${ctx.from?.id}`);
     if (!chatId) return;
     try {
       await sendOrderWidget(
@@ -46,8 +48,12 @@ export function registerStartHandlers(): void {
         { text: '🧪 Тестовый виджет Coffee POS. Нажмите кнопку — бот ответит обновлением состояния.', orderId: null },
         'Coffee POS — тест виджета',
       );
+      console.error('/widget: sendWidget OK');
     } catch (err) {
-      console.error('Failed to send test widget:', err);
+      const anyErr = err as { description?: string; payload?: unknown; method?: string } | null;
+      console.error('/widget error message:', err instanceof Error ? err.message : String(err));
+      console.error('/widget error description:', anyErr?.description);
+      console.error('/widget error payload:', JSON.stringify(anyErr?.payload));
       await ctx.reply(`❌ Не удалось отправить виджет: ${err instanceof Error ? err.message : String(err)}`);
     }
   });
