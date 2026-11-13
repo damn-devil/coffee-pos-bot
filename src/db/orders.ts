@@ -130,6 +130,30 @@ export async function listActiveOrders(): Promise<Order[]> {
   return rows.map(toOrder);
 }
 
+export async function getLatestOrderByClient(clientTelegramId: string): Promise<Order | null> {
+  const order = await prisma.order.findFirst({
+    where: { clientTelegramId },
+    orderBy: { number: 'desc' },
+  });
+  if (!order) return null;
+  const row: OrderRow = {
+    number: order.number,
+    items: order.items,
+    total: order.total,
+    payment: order.payment,
+    status: order.status,
+    etaMinutes: order.etaMinutes,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    readyAt: order.readyAt,
+    clientTelegramId: order.clientTelegramId,
+    clientName: order.clientName,
+    clientUsername: order.clientUsername,
+    clientPhone: order.clientPhone,
+  };
+  return toOrder(row);
+}
+
 export async function markOrderReady(id: number): Promise<Order | null> {
   const order = await prisma.order.findUnique({ where: { number: id } });
   if (!order) return null;

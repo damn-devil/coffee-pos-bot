@@ -1,6 +1,7 @@
 import { bot } from '../bot.js';
-import { createOrder } from '../db/orders.js';
+import { createOrder, getLatestOrderByClient } from '../db/orders.js';
 import { notifyBaristasNewOrder } from '../services/notifications.js';
+import { sendOrderWidget, answerWidgetQuery, editWidgetChatData } from '../services/widget.js';
 
 interface WebAppOrderPayload {
   items?: Array<{ productId: string; qty: number }>;
@@ -9,10 +10,46 @@ interface WebAppOrderPayload {
   etaMinutes?: number;
 }
 
+interface WidgetQuery {
+  id: string;
+  from?: { id: number; first_name?: string; username?: string; phone_number?: string };
+  chat?: { id: number; type?: string };
+  message_id?: number;
+  data?: string;
+  widget_id?: string;
+}
+
+interface UpdateWithWidgetQuery {
+  web_app_data?: { chat_id?: number; data?: string };
+  widget_query?: WidgetQuery;
+}
+
 export function registerOrderHandlers(): void {
   bot.use(async (ctx, next) => {
-    const webAppData = (ctx.update as { web_app_data?: { chat_id?: number; data?: string } }).web_app_data;
-    const payload = webAppData?.data;
+    const update = ctx.update as UpdateWithWidgetQuery;
+    const widgetQuery = update.widget_query;
+
+    if (widgetQuery) {
+      const data = widgetQuery.data || '';
+      const chatId = widgetQuery.chat?.id;
+
+      if (data.startsWith('order:')) {
+        const order = chatId ? await getLatestOrderByClient(String(chatId)) : null;
+        const chatData = order
+          ? { text: `Заказ №${order.number} принят`, orderId: order.number }
+          : { text: 'Заказ не найден' };
+
+        await answerWidgetQuery(widgetQuery.id, JSON.stringify({ ok: true, action: data }));
+        if (widgetQuery.message_id && chatId) {
+          await editWidgetChatData(chatId, widgetQuery.message_id, chatData);
+        }
+      } else {
+        await answerWidgetQuery(widgetQuery.id, JSON.stringify({ ok: true, action: data }));
+      }
+      return;
+    }
+
+    const payload = update.web_app_data?.data;
     if (!payload) {
       await next();
       return;
@@ -55,5 +92,10 @@ export function registerOrderHandlers(): void {
       ].join('\n'),
       { parse_mode: 'HTML' },
     );
+
+    const chatId = ctx.chat?.id;
+    if (chatId) {
+      await sendOrderWidget(chatId, { text: `Заказ №${order.number} принят`, orderId: order.number }, `Заказ №${order.number}`);
+    }
   });
 }

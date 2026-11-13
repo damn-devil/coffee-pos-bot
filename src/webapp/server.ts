@@ -26,6 +26,14 @@ export function createApp(): Express {
     res.json(menu);
   });
 
+  app.get('/menu', (_req: Request, res: Response) => {
+    res.sendFile(path.resolve(process.cwd(), 'public/menu.html'));
+  });
+
+  app.get('/orders', (_req: Request, res: Response) => {
+    res.sendFile(path.resolve(process.cwd(), 'public/orders.html'));
+  });
+
   app.get('/api/orders', async (req: Request, res: Response) => {
     const orders = await listActiveOrders();
     res.json(orders);
