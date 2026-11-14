@@ -89,6 +89,10 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
     total += product.price * qty;
   }
 
+  if (items.length === 0) {
+    throw new Error('No valid items in order');
+  }
+
   const etaMinutes = Math.max(1, Math.floor(Number(data.etaMinutes) || 10));
   const now = Date.now();
 

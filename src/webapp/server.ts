@@ -2,8 +2,9 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import path from 'path';
 import { bot } from '../bot.js';
 import { getMenu } from '../services/menu.js';
-import { listActiveOrders, markOrderReady, getLatestActiveOrderByClient } from '../db/orders.js';
-import { notifyClientOrderReady, notifyBaristasOrderReady } from '../services/notifications.js';
+import { listActiveOrders, markOrderReady, getLatestActiveOrderByClient, createOrder } from '../db/orders.js';
+import { notifyClientOrderReady, notifyBaristasOrderReady, notifyBaristasNewOrder } from '../services/notifications.js';
+import { z } from 'zod';
 import { getBaristaChatIds } from '../lib/chatIds.js';
 import { verifyTelegramRequest } from '../lib/telegramInitData.js';
 import { loadEnv } from '../config.js';
@@ -61,6 +62,75 @@ export function createApp(): Express {
 
   app.get('/orders', (_req: Request, res: Response) => {
     res.sendFile(path.resolve(process.cwd(), 'public/orders.html'));
+  });
+
+  const clientOrderSchema = z.object({
+    items: z.array(z.object({ productId: z.string().min(1), qty: z.number().int().min(1).max(50) })).min(1).max(30),
+    payment: z.enum(['card', 'cash']).default('card'),
+    cash: z.number().min(0).max(1_000_000).default(0),
+    etaMinutes: z.number().int().min(1).max(60).default(10),
+  });
+
+  app.post('/api/client/orders', async (req: Request, res: Response) => {
+    const verified = verifyTelegramRequest(req);
+    if (!verified) {
+      res.status(401).json({ error: 'Unauthorized: telegram initData required' });
+      return;
+    }
+    const parsed = clientOrderSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Invalid order payload' });
+      return;
+    }
+    const data = parsed.data;
+    const user = verified.user as { id: number; first_name?: string; username?: string };
+    const order = await createOrder({
+      items: data.items,
+      payment: data.payment,
+      cash: data.cash,
+      etaMinutes: data.etaMinutes,
+      clientTelegramId: String(user.id),
+      clientName: user.first_name ?? null,
+      clientUsername: user.username ?? null,
+      clientPhone: null,
+    }).catch((err: Error) => {
+      console.error('createOrder failed:', err.message);
+      return null;
+    });
+    if (!order) {
+      res.status(400).json({ error: 'No valid items in order' });
+      return;
+    }
+
+    try {
+      await notifyBaristasNewOrder(order);
+    } catch (err) {
+      console.error('Failed to notify baristas:', err instanceof Error ? err.message : err);
+    }
+
+    try {
+      await bot.api.sendMessage(
+        user.id,
+        [
+          `✅ <b>Заказ №${order.number} принят!</b>`,
+          `Ориентировочно готов через ${order.etaMinutes} мин.`,
+        ].join('\n'),
+        { parse_mode: 'HTML' },
+      );
+    } catch (err) {
+      console.error('Failed to confirm order to client:', err instanceof Error ? err.message : err);
+    }
+
+    res.json({
+      number: order.number,
+      items: order.items.map((item) => ({ name: item.name, qty: item.qty, price: item.price })),
+      total: order.total,
+      payment: order.payment,
+      status: order.status,
+      etaMinutes: order.etaMinutes,
+      readyAt: order.readyAt,
+      createdAt: order.createdAt,
+    });
   });
 
   app.get('/api/client/current-order', async (req: Request, res: Response) => {
