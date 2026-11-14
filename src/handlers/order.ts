@@ -19,8 +19,18 @@ interface WidgetQuery {
   widget_id?: string;
 }
 
+interface ContextShape {
+  message?: {
+    web_app_data?: { data?: string; button_text?: string };
+    chat?: { id?: number };
+    from?: { id?: number; first_name?: string; username?: string; phone_number?: string };
+  };
+  chat?: { id?: number };
+  from?: { id?: number; first_name?: string; username?: string; phone_number?: string };
+}
+
 interface UpdateWithWidgetQuery {
-  web_app_data?: { chat_id?: number; data?: string };
+  web_app_data?: { data?: string };
   widget_query?: WidgetQuery;
 }
 
@@ -49,7 +59,11 @@ export function registerOrderHandlers(): void {
       return;
     }
 
-    const payload = update.web_app_data?.data;
+    const raw = ctx as unknown as ContextShape;
+    const message = raw.message;
+    const webAppData = message?.web_app_data;
+    const payload = webAppData?.data;
+
     if (!payload) {
       await next();
       return;
@@ -69,33 +83,43 @@ export function registerOrderHandlers(): void {
       return;
     }
 
-    const from = ctx.from;
-    const fromUser = from as { phone_number?: string } | undefined | null;
+    const chatId = message?.chat?.id ?? raw.chat?.id ?? null;
+    const from = message?.from ?? raw.from;
+
     const order = await createOrder({
       items,
       payment: parsed.payment === 'cash' ? 'cash' : 'card',
       cash: Number(parsed.cash) || 0,
       etaMinutes: Number(parsed.etaMinutes) || 10,
-      clientTelegramId: ctx.chat?.id ? String(ctx.chat.id) : null,
+      clientTelegramId: chatId ? String(chatId) : null,
       clientName: from?.first_name ?? null,
       clientUsername: from?.username ?? null,
-      clientPhone: fromUser?.phone_number ?? null,
+      clientPhone: from?.phone_number ?? null,
     });
 
     await notifyBaristasNewOrder(order);
 
-    await ctx.reply(
-      [
-        `✅ <b>Заказ №${order.number} принят!</b>`,
-        `Ориентировочно готов через ${order.etaMinutes} мин.`,
-        `Бариста оповещён о вашем заказе. 🙌`,
-      ].join('\n'),
-      { parse_mode: 'HTML' },
-    );
+    try {
+      await ctx.reply(
+        [
+          `✅ <b>Заказ №${order.number} принят!</b>`,
+          `Ориентировочно готов через ${order.etaMinutes} мин.`,
+          `Бариста оповещён о вашем заказе. 🙌`,
+        ].join('\n'),
+        { parse_mode: 'HTML' },
+      );
+    } catch (err) {
+      console.error('Failed to reply order confirmation to client:', err instanceof Error ? err.message : err);
+    }
 
-    const chatId = ctx.chat?.id;
     if (chatId) {
-      await sendOrderWidget(chatId, { text: `Заказ №${order.number} принят`, orderId: order.number }, `Заказ №${order.number}`);
+      await sendOrderWidget(
+        chatId,
+        { text: `Заказ №${order.number} принят`, orderId: order.number },
+        `Заказ №${order.number}`,
+      ).catch((err) => {
+        console.error('Failed to send order widget:', err instanceof Error ? err.message : err);
+      });
     }
   });
 }

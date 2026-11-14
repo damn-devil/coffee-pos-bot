@@ -31,9 +31,9 @@ interface OrderRow {
   payment: string;
   status: string;
   etaMinutes: number;
-  createdAt: number;
-  updatedAt: number;
-  readyAt: number;
+  createdAt: bigint | number;
+  updatedAt: bigint | number;
+  readyAt: bigint | number;
   clientTelegramId: string | null;
   clientName: string | null;
   clientUsername: string | null;
@@ -56,7 +56,13 @@ function parseItems(raw: string): OrderItem[] {
 }
 
 function toOrder(row: OrderRow): Order {
-  return { ...row, items: parseItems(row.items) };
+  return {
+    ...row,
+    createdAt: Number(row.createdAt),
+    updatedAt: Number(row.updatedAt),
+    readyAt: Number(row.readyAt),
+    items: parseItems(row.items),
+  };
 }
 
 export interface CreateOrderData {
@@ -157,7 +163,7 @@ export async function getLatestOrderByClient(clientTelegramId: string): Promise<
 export async function getLatestActiveOrderByClient(clientTelegramId: string, windowMs = 3 * 60 * 60_000): Promise<Order | null> {
   const cutoff = Date.now() - windowMs;
   const order = await prisma.order.findFirst({
-    where: { clientTelegramId, createdAt: { gte: cutoff } },
+    where: { clientTelegramId, createdAt: { gte: BigInt(cutoff) } },
     orderBy: { number: 'desc' },
   });
   if (!order) return null;

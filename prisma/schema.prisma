@@ -14,9 +14,9 @@ model Order {
   payment          String
   status           String  @default("new")
   etaMinutes       Int
-  createdAt        Int
-  updatedAt        Int
-  readyAt          Int
+  createdAt        BigInt
+  updatedAt        BigInt
+  readyAt          BigInt
   clientTelegramId String?
   clientName       String?
   clientUsername   String?

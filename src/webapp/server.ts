@@ -6,6 +6,9 @@ import { listActiveOrders, markOrderReady, getLatestActiveOrderByClient } from '
 import { notifyClientOrderReady, notifyBaristasOrderReady } from '../services/notifications.js';
 import { getBaristaChatIds } from '../lib/chatIds.js';
 import { verifyTelegramRequest } from '../lib/telegramInitData.js';
+import { loadEnv } from '../config.js';
+
+const env = loadEnv();
 
 function requireBarista(req: Request, res: Response): { ok: true } | { ok: false } {
   const verified = verifyTelegramRequest(req);
@@ -27,6 +30,13 @@ export function createApp(): Express {
 
   app.post('/webhook', async (req: Request, res: Response) => {
     try {
+      if (env.WEBHOOK_SECRET) {
+        const token = req.headers['x-telegram-bot-api-secret-token'];
+        if (token !== env.WEBHOOK_SECRET) {
+          res.sendStatus(401);
+          return;
+        }
+      }
       const update = req.body as Parameters<typeof bot.handleUpdate>[0];
       await bot.handleUpdate(update);
       res.sendStatus(200);
