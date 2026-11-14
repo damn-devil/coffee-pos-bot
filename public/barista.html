@@ -653,7 +653,6 @@ $('image-input').addEventListener('change', async (e) => {
 $('remove-image-btn').addEventListener('click', () => { imageData = null; setImagePreview(null); });
 
 /* ---------- bindings ---------- */
-$('back-btn').addEventListener('click', () => { if (tg && tg.close) tg.close(); });
 $('add-product-btn').addEventListener('click', () => openProductSheet(null, null));
 $('save-product-btn').addEventListener('click', saveProduct);
 $('cancel-product-btn').addEventListener('click', closeSheets);
