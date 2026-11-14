@@ -154,6 +154,31 @@ export async function getLatestOrderByClient(clientTelegramId: string): Promise<
   return toOrder(row);
 }
 
+export async function getLatestActiveOrderByClient(clientTelegramId: string, windowMs = 3 * 60 * 60_000): Promise<Order | null> {
+  const cutoff = Date.now() - windowMs;
+  const order = await prisma.order.findFirst({
+    where: { clientTelegramId, createdAt: { gte: cutoff } },
+    orderBy: { number: 'desc' },
+  });
+  if (!order) return null;
+  const row: OrderRow = {
+    number: order.number,
+    items: order.items,
+    total: order.total,
+    payment: order.payment,
+    status: order.status,
+    etaMinutes: order.etaMinutes,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    readyAt: order.readyAt,
+    clientTelegramId: order.clientTelegramId,
+    clientName: order.clientName,
+    clientUsername: order.clientUsername,
+    clientPhone: order.clientPhone,
+  };
+  return toOrder(row);
+}
+
 export async function markOrderReady(id: number): Promise<Order | null> {
   const order = await prisma.order.findUnique({ where: { number: id } });
   if (!order) return null;

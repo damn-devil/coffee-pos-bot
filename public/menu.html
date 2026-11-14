@@ -73,7 +73,22 @@
   .hero h2 { font-family:'Fraunces',serif; font-weight:600; font-size:16px; line-height:1.25; }
   .hero p { font-size:11px; color:#d9b795; margin-top:4px; font-weight:600; letter-spacing:.03em; }
 
-  /* ===== Categories ===== */
+  /* ===== Order status ===== */
+  .order-status { background:var(--card); border-radius:22px; padding:16px; box-shadow:var(--shadow); border:1px solid rgba(44,26,16,.07); display:flex; flex-direction:column; gap:10px; }
+  .os-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .os-label { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+  .os-num { font-family:'Fraunces',serif; font-weight:900; font-size:27px; color:var(--espresso); line-height:1.1; }
+  .os-pill { padding:7px 13px; border-radius:100px; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; background:#fde8c8; color:#8a5a00; white-space:nowrap; }
+  .os-pill.preparing { background:#ffe1b0; color:#7a4a00; }
+  .os-pill.ready { background:#dff5e5; color:#1f6b3a; }
+  .os-items { font-size:13px; color:var(--ink); line-height:1.45; }
+  .os-row { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:13px; }
+  .os-row span { color:var(--muted); font-weight:700; }
+  .os-row b { font-family:'Fraunces',serif; font-size:16px; color:var(--espresso); }
+  .os-timer { display:flex; align-items:center; justify-content:space-between; background:var(--paper-deep); border-radius:16px; padding:10px 14px; }
+  .os-timer span { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .os-timer b { font-family:'Fraunces',serif; font-size:23px; color:var(--terra-deep); font-variant-numeric:tabular-nums; }
+  .os-note { font-size:13px; font-weight:800; color:var(--ok); text-align:center; margin:2px 0 0; }
   .cats { display:flex; flex-wrap:wrap; gap:8px; }
   .cat {
     flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; min-height:44px;
@@ -189,6 +204,17 @@
       <h2>Свежий кофе за 5–30&nbsp;минут</h2>
       <p>Заказ уйдёт баристам мгновенно · выдача на точке</p>
     </div>
+  </div>
+
+  <div id="order-status" class="order-status hidden">
+    <div class="os-top">
+      <div><div class="os-label">Ваш заказ</div><div class="os-num">№<span id="os-num">–</span></div></div>
+      <div class="os-pill" id="os-pill">Принят</div>
+    </div>
+    <div class="os-items" id="os-items"></div>
+    <div class="os-row"><span>Итого</span><b id="os-total">0 Br</b></div>
+    <div class="os-timer"><span>Осталось около</span><b id="os-timer">--:--</b></div>
+    <p id="os-note" class="os-note hidden">🎉 Заказ готов! Можно забирать.</p>
   </div>
 
   <div id="cats" class="cats"></div>
@@ -382,11 +408,54 @@ function submitOrder() {
     tg.sendData(JSON.stringify(payload));
     closeCheckout();
     showSuccess();
+    setTimeout(pollClientOrder, 1200);
   } else {
     closeCheckout();
     $('checkout-summary').innerHTML = '<div class="opt"><b>Откройте меню в Telegram — заказ уйдёт баристам.</b></div>';
     $('success').classList.add('open');
   }
+}
+
+let currentOrder = null;
+
+function fmtCountdown(ms) {
+  const t = Math.max(0, Math.floor(ms / 1000));
+  const m = String(Math.floor(t / 60)).padStart(2, '0');
+  const s = String(t % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+async function pollClientOrder() {
+  if (!tg || !tg.initData) return;
+  try {
+    const r = await fetch('/api/client/current-order', { headers: { 'X-Telegram-Init-Data': tg.initData } });
+    if (r.status === 404 || r.status === 401) { hideOrderCard(); return; }
+    currentOrder = await r.json();
+    renderOrderCard();
+  } catch (e) { /* keep last known state */ }
+}
+
+function renderOrderCard() {
+  if (!currentOrder) { hideOrderCard(); return; }
+  $('os-num').textContent = currentOrder.number;
+  $('os-items').textContent = (currentOrder.items || []).map((i) => `${i.qty}× ${i.name}`).join(', ');
+  $('os-total').textContent = money(currentOrder.total);
+  const pill = $('os-pill');
+  const status = currentOrder.status || 'new';
+  pill.textContent = status === 'new' ? 'Принят' : (status === 'preparing' ? 'Готовится' : (status === 'ready' ? 'Готов' : status));
+  pill.className = 'os-pill ' + status;
+  $('order-status').classList.remove('hidden');
+  $('os-note').classList.toggle('hidden', status !== 'ready');
+}
+
+function hideOrderCard() {
+  $('order-status').classList.add('hidden');
+  currentOrder = null;
+}
+
+function tickClientOrder() {
+  if (!currentOrder) return;
+  $('os-timer').textContent = fmtCountdown(Math.max(0, currentOrder.readyAt - Date.now()));
 }
 
 $('cart-btn').addEventListener('click', () => { if (cart.length) openCheckout(); });
@@ -408,6 +477,9 @@ document.querySelectorAll('input[name="pay"]').forEach((r) => {
 (function init() {
   etaMinutes = 15;
   loadMenu();
+  pollClientOrder();
+  setInterval(tickClientOrder, 1000);
+  setInterval(pollClientOrder, 5000);
 })();
 </script>
 </body>

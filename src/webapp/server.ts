@@ -2,8 +2,23 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import path from 'path';
 import { bot } from '../bot.js';
 import { getMenu } from '../services/menu.js';
-import { listActiveOrders, markOrderReady } from '../db/orders.js';
+import { listActiveOrders, markOrderReady, getLatestActiveOrderByClient } from '../db/orders.js';
 import { notifyClientOrderReady, notifyBaristasOrderReady } from '../services/notifications.js';
+import { getBaristaChatIds } from '../lib/chatIds.js';
+import { verifyTelegramRequest } from '../lib/telegramInitData.js';
+
+function requireBarista(req: Request, res: Response): { ok: true } | { ok: false } {
+  const verified = verifyTelegramRequest(req);
+  if (!verified) {
+    res.status(401).json({ error: 'Unauthorized: telegram initData required' });
+    return { ok: false };
+  }
+  if (!getBaristaChatIds().includes(verified.user.id)) {
+    res.status(403).json({ error: 'Forbidden: barista only' });
+    return { ok: false };
+  }
+  return { ok: true };
+}
 
 export function createApp(): Express {
   const app = express();
@@ -38,12 +53,39 @@ export function createApp(): Express {
     res.sendFile(path.resolve(process.cwd(), 'public/orders.html'));
   });
 
+  app.get('/api/client/current-order', async (req: Request, res: Response) => {
+    const verified = verifyTelegramRequest(req);
+    if (!verified) {
+      res.status(401).json({ error: 'Unauthorized: telegram initData required' });
+      return;
+    }
+    const order = await getLatestActiveOrderByClient(String(verified.user.id));
+    if (!order) {
+      res.status(404).json({ error: 'No active order' });
+      return;
+    }
+    res.json({
+      number: order.number,
+      items: order.items.map((item) => ({ name: item.name, qty: item.qty, price: item.price })),
+      total: order.total,
+      payment: order.payment,
+      status: order.status,
+      etaMinutes: order.etaMinutes,
+      readyAt: order.readyAt,
+      createdAt: order.createdAt,
+    });
+  });
+
   app.get('/api/orders', async (req: Request, res: Response) => {
+    const auth = requireBarista(req, res);
+    if (!auth.ok) return;
     const orders = await listActiveOrders();
     res.json(orders);
   });
 
   app.post('/api/orders/:id/ready', async (req: Request, res: Response) => {
+    const auth = requireBarista(req, res);
+    if (!auth.ok) return;
     const id = Number(req.params.id);
     const order = await markOrderReady(id);
     if (!order) {
