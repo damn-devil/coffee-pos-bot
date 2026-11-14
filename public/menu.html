@@ -89,7 +89,12 @@
   .os-timer span { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
   .os-timer b { font-family:'Fraunces',serif; font-size:23px; color:var(--terra-deep); font-variant-numeric:tabular-nums; }
   .os-note { font-size:13px; font-weight:800; color:var(--ok); text-align:center; margin:2px 0 0; }
-  .cats { display:flex; flex-wrap:wrap; gap:8px; }
+  .menu-section { display:flex; flex-direction:column; gap:10px; }
+  .cat-head { display:flex; align-items:center; gap:9px; padding:6px 2px 8px; border-bottom:1.5px dashed rgba(44,26,16,.22); }
+  .cat-head .cat-emoji { font-size:20px; line-height:1; }
+  .cat-head h2 { font-family:'Fraunces',serif; font-weight:700; font-size:16.5px; color:var(--espresso); }
+  .cat-head .cat-count { margin-left:auto; font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+  .cat-products { display:flex; flex-direction:column; gap:12px; }
   .cat {
     flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; min-height:44px;
     padding:10px 17px; border:1.5px solid rgba(44,26,16,.10); border-radius:16px;
@@ -261,7 +266,6 @@
       <p id="os-note" class="os-note hidden">🎉 Заказ готов! Можно забирать.</p>
     </div>
 
-    <div id="cats" class="cats"></div>
     <div id="list"></div>
   </div>
 
@@ -315,7 +319,6 @@ const $ = (id) => document.getElementById(id);
 
 let menu = { categories: [], products: [] };
 let cart = [];
-let activeCat = 'all';
 let payment = 'card';
 let cash = 0;
 let etaMinutes = 15;
@@ -341,19 +344,9 @@ async function loadMenu() {
   }
   menu.categories = [...(menu.categories || [])].sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
   menu.products = [...(menu.products || [])].sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
-  renderCats();
   renderList();
 }
 
-function renderCats() {
-  const c = $('cats');
-  let html = `<button class="cat ${activeCat === 'all' ? 'active' : ''}" data-cat="all">Всё меню</button>`;
-  for (const cat of menu.categories || []) {
-    html += `<button class="cat ${activeCat === cat.id ? 'active' : ''}" data-cat="${cat.id}">${cat.emoji} ${cat.name}</button>`;
-  }
-  c.innerHTML = html;
-  c.querySelectorAll('.cat').forEach((b) => b.addEventListener('click', () => { activeCat = b.dataset.cat; renderCats(); renderList(); }));
-}
 
 function detailedCart() {
   return cart.map((c) => ({ ...c, product: (menu.products || []).find((p) => p.id === c.productId) })).filter((c) => c.product);
@@ -363,26 +356,45 @@ function cartTotal() { return detailedCart().reduce((sum, c) => sum + c.product.
 
 function renderList() {
   const list = $('list');
-  const products = activeCat === 'all' ? (menu.products || []) : (menu.products || []).filter((p) => p.category === activeCat);
-  if (!products || !products.length) { list.innerHTML = '<div class="empty-state">В этой категории пока пусто.</div>'; return; }
-  list.innerHTML = products.map((p) => {
-    const entry = cart.find((c) => c.productId === p.id);
-    const qty = entry ? entry.qty : 0;
-    const visual = p.image
-      ? `<img class="pic" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="emoji" style="display:none">${p.emoji || '☕'}</div>`
-      : `<div class="emoji">${p.emoji || '☕'}</div>`;
-    return `<div class="card">
-      ${visual}
-      <div class="info">
-        <div class="name">${p.name}</div>
-        <div class="desc">${p.volume ? `<b style="color:var(--espresso)">${esc(p.volume)}</b>${p.desc ? ' · ' : ''}` : ''}${esc(p.desc || '')}</div>
-        <div class="price">${money(p.price)}</div>
+  const sections = (menu.categories || [])
+    .map((cat) => ({ cat, items: (menu.products || []).filter((p) => p.category === cat.id) }))
+    .filter((s) => s.items.length);
+
+  if (!sections.length) {
+    list.innerHTML = '<div class="empty-state">Меню пусто</div>';
+    return;
+  }
+
+  list.innerHTML = sections.map(({ cat, items }) => `
+    <section class="menu-section">
+      <div class="cat-head">
+        <span class="cat-emoji">${esc(cat.emoji || '📦')}</span>
+        <h2>${esc(cat.name)}</h2>
+        <span class="cat-count">${items.length} поз.</span>
       </div>
-      <div class="stepper">
-        ${qty > 0 ? `<button data-act="minus" data-id="${p.id}">−</button><span>${qty}</span><button data-act="plus" data-id="${p.id}">+</button>` : `<button data-act="plus" data-id="${p.id}">+</button>`}
+      <div class="cat-products">
+        ${items.map((p) => {
+          const entry = cart.find((c) => c.productId === p.id);
+          const qty = entry ? entry.qty : 0;
+          const visual = p.image
+            ? `<img class="pic" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="emoji" style="display:none">${p.emoji || '☕'}</div>`
+            : `<div class="emoji">${p.emoji || '☕'}</div>`;
+          return `<div class="card">
+            ${visual}
+            <div class="info">
+              <div class="name">${esc(p.name)}</div>
+              <div class="desc">${p.volume ? `<b style="color:var(--espresso)">${esc(p.volume)}</b>${p.desc ? ' · ' : ''}` : ''}${esc(p.desc || '')}</div>
+              <div class="price">${money(p.price)}</div>
+            </div>
+            <div class="stepper">
+              ${qty > 0 ? `<button data-act="minus" data-id="${p.id}">−</button><span>${qty}</span><button data-act="plus" data-id="${p.id}">+</button>` : `<button data-act="plus" data-id="${p.id}">+</button>`}
+            </div>
+          </div>`;
+        }).join('')}
       </div>
-    </div>`;
-  }).join('');
+    </section>
+  `).join('');
+
   list.querySelectorAll('[data-act]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
