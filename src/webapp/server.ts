@@ -2,8 +2,8 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import path from 'path';
 import { bot } from '../bot.js';
 import { getMenu } from '../services/menu.js';
-import { listActiveOrders, markOrderReady, getLatestActiveOrderByClient, createOrder } from '../db/orders.js';
-import { notifyClientOrderReady, notifyBaristasOrderReady, notifyBaristasNewOrder } from '../services/notifications.js';
+import { listActiveOrders, markOrderReady, getLatestActiveOrderByClient, createOrder, listClientOrders, cancelOrder } from '../db/orders.js';
+import { notifyClientOrderReady, notifyBaristasOrderReady, notifyBaristasNewOrder, notifyBaristasOrderCancelled, notifyClientOrderCancelled } from '../services/notifications.js';
 import { z } from 'zod';
 import { getBaristaChatIds } from '../lib/chatIds.js';
 import { verifyTelegramRequest } from '../lib/telegramInitData.js';
@@ -131,6 +131,62 @@ export function createApp(): Express {
       readyAt: order.readyAt,
       createdAt: order.createdAt,
     });
+  });
+
+  app.get('/api/client/orders', async (req: Request, res: Response) => {
+    const verified = verifyTelegramRequest(req);
+    if (!verified) {
+      res.status(401).json({ error: 'Unauthorized: telegram initData required' });
+      return;
+    }
+    const orders = await listClientOrders(String(verified.user.id), 30);
+    res.json(orders.map((order) => ({
+      number: order.number,
+      items: order.items.map((item) => ({ name: item.name, qty: item.qty, price: item.price })),
+      total: order.total,
+      payment: order.payment,
+      status: order.status,
+      etaMinutes: order.etaMinutes,
+      readyAt: order.readyAt,
+      createdAt: order.createdAt,
+    })));
+  });
+
+  app.post('/api/client/orders/:number/cancel', async (req: Request, res: Response) => {
+    const verified = verifyTelegramRequest(req);
+    if (!verified) {
+      res.status(401).json({ error: 'Unauthorized: telegram initData required' });
+      return;
+    }
+    const number = Number(req.params.number);
+    if (!Number.isInteger(number) || number <= 0) {
+      res.status(400).json({ error: 'Invalid order number' });
+      return;
+    }
+    const { result, order } = await cancelOrder(number, String(verified.user.id));
+    if (result === 'cancelled' && order) {
+      try {
+        await notifyBaristasOrderCancelled(order);
+      } catch (err) {
+        console.error('Failed to notify baristas about cancelled order:', err instanceof Error ? err.message : err);
+      }
+      try {
+        await notifyClientOrderCancelled(order);
+      } catch (err) {
+        console.error('Failed to confirm cancellation to client:', err instanceof Error ? err.message : err);
+      }
+      res.json({ ok: true, number: order.number, status: order.status });
+      return;
+    }
+    if (result === 'too_late') {
+      res.status(409).json({ error: 'Слишком поздно отменять — до готовности меньше 5 минут' });
+      return;
+    }
+    if (result === 'already_ready') {
+      res.status(409).json({ error: 'Заказ уже готов или отменён — отменить нельзя' });
+      return;
+    }
+    res.status(404).json({ error: 'Заказ не найден' });
   });
 
   app.get('/api/client/current-order', async (req: Request, res: Response) => {

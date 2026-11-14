@@ -167,7 +167,7 @@ export async function getLatestOrderByClient(clientTelegramId: string): Promise<
 export async function getLatestActiveOrderByClient(clientTelegramId: string, windowMs = 3 * 60 * 60_000): Promise<Order | null> {
   const cutoff = Date.now() - windowMs;
   const order = await prisma.order.findFirst({
-    where: { clientTelegramId, createdAt: { gte: BigInt(cutoff) } },
+    where: { clientTelegramId, createdAt: { gte: BigInt(cutoff) }, status: { in: ['new', 'preparing', 'ready'] } },
     orderBy: { number: 'desc' },
   });
   if (!order) return null;
@@ -187,6 +187,27 @@ export async function getLatestActiveOrderByClient(clientTelegramId: string, win
     clientPhone: order.clientPhone,
   };
   return toOrder(row);
+}
+
+export type CancelOrderResult = 'cancelled' | 'not_found' | 'already_ready' | 'too_late';
+
+export async function listClientOrders(clientTelegramId: string, limit = 30): Promise<Order[]> {
+  const rows = await prisma.order.findMany({
+    where: { clientTelegramId },
+    orderBy: { number: 'desc' },
+    take: limit,
+  });
+  return rows.map(toOrder);
+}
+
+export async function cancelOrder(number: number, clientTelegramId: string): Promise<{ result: CancelOrderResult; order?: Order }> {
+  const order = await prisma.order.findFirst({ where: { number, clientTelegramId } });
+  if (!order) return { result: 'not_found' };
+  if (order.status === 'ready' || order.status === 'cancelled') return { result: 'already_ready' };
+  const now = Date.now();
+  if (Number(order.readyAt) - now <= 5 * 60_000) return { result: 'too_late' };
+  const updated = await prisma.order.update({ where: { number }, data: { status: 'cancelled', updatedAt: now } });
+  return { result: 'cancelled', order: toOrder(updated) };
 }
 
 export async function markOrderReady(id: number): Promise<Order | null> {

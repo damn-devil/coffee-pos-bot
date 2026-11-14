@@ -132,6 +132,44 @@
   .stepper button[data-act="plus"] { background:var(--terra); color:#fff; box-shadow: 0 4px 10px rgba(196,83,42,.4); }
   .stepper span { min-width:18px; text-align:center; font-weight:800; font-size:15px; color:var(--espresso); }
 
+  /* ===== View tabs ===== */
+  .view-tabs { display:flex; gap:10px; }
+  .view-tab {
+    flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:12px 14px; border:none; border-radius:16px; background:var(--card);
+    font-family:'Manrope'; font-weight:800; font-size:14px; color:var(--ink);
+    box-shadow: var(--shadow-sm); transition: all .18s;
+  }
+  .view-tab.active { background:var(--espresso); color:#f6e8d8; }
+  .tab-badge { min-width:24px; height:24px; padding:0 7px; border-radius:13px; background:var(--terra); color:#fff; font-size:12px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
+  .tab-badge.hidden { display:none; }
+  .view { display:flex; flex-direction:column; gap:14px; }
+
+  /* ===== My orders cards ===== */
+  .order-card { background:var(--card); border-radius:20px; padding:14px 15px; box-shadow:var(--shadow-sm); border:1px solid rgba(44,26,16,.07); display:flex; flex-direction:column; gap:9px; animation: cardIn .35s ease both; }
+  .order-card.ready { border-color:rgba(62,125,78,.35); }
+  .order-card.cancelled { opacity:.65; }
+  .oc-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .oc-label { font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+  .oc-num { font-family:'Fraunces',serif; font-weight:900; font-size:23px; color:var(--espresso); line-height:1.05; }
+  .oc-pill { padding:6px 12px; border-radius:100px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; background:#fde8c8; color:#8a5a00; white-space:nowrap; }
+  .oc-pill.preparing { background:#ffe1b0; color:#7a4a00; }
+  .oc-pill.ready { background:#dff5e5; color:#1f6b3a; }
+  .oc-pill.cancelled { background:#e8e2da; color:#6b6157; }
+  .oc-items { font-size:13px; line-height:1.5; }
+  .oc-meta { display:flex; justify-content:space-between; gap:8px; font-size:12.5px; color:var(--muted); font-weight:600; }
+  .oc-meta b { color:var(--espresso); }
+  .oc-countdown { display:flex; align-items:center; justify-content:space-between; background:var(--paper-deep); border-radius:14px; padding:9px 13px; }
+  .oc-countdown span { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .oc-countdown b { font-family:'Fraunces',serif; font-size:22px; color:var(--terra-deep); font-variant-numeric:tabular-nums; }
+  .oc-countdown.due b { color:var(--terra-deep); }
+  .warn { font-size:12px; font-weight:700; border-radius:12px; padding:9px 11px; line-height:1.4; }
+  .warn.soft { background:#fdf3df; color:#8a5a00; border:1px dashed #e3c878; }
+  .warn.hard { background:#fde3df; color:#8f2318; border:1px dashed #e08c83; }
+  .cancel-btn { border:1.5px solid rgba(166,63,28,.4); background:transparent; color:var(--terra-deep); border-radius:14px; padding:12px; font-family:'Manrope'; font-weight:800; font-size:13px; cursor:pointer; transition:all .15s; }
+  .cancel-btn:hover, .cancel-btn:active { background:#fde9e0; }
+  .cancel-btn:disabled { border-color:rgba(44,26,16,.15); color:var(--muted); cursor:default; background:transparent; }
+
   /* ===== Cart bar ===== */
   .cart-bar {
     position:fixed; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); left:12px; right:12px; z-index:40;
@@ -198,27 +236,44 @@
     <button class="cart-btn" id="cart-btn">🛒<span class="badge" id="cart-badge">0</span></button>
   </div>
 
-  <div class="hero">
-    <div class="hero-emoji">🥡</div>
-    <div>
-      <h2>Свежий кофе за 5–30&nbsp;минут</h2>
-      <p>Заказ уйдёт баристам мгновенно · выдача на точке</p>
-    </div>
+  <div class="view-tabs">
+    <button class="view-tab active" id="view-tab-menu">🍰 Меню</button>
+    <button class="view-tab" id="view-tab-orders">🧾 Мои заказы<span id="orders-badge" class="tab-badge hidden">0</span></button>
   </div>
 
-  <div id="order-status" class="order-status hidden">
-    <div class="os-top">
-      <div><div class="os-label">Ваш заказ</div><div class="os-num">№<span id="os-num">–</span></div></div>
-      <div class="os-pill" id="os-pill">Принят</div>
+  <div id="view-menu" class="view">
+    <div class="hero">
+      <div class="hero-emoji">🥡</div>
+      <div>
+        <h2>Свежий кофе за 5–30&nbsp;минут</h2>
+        <p>Заказ уйдёт баристам мгновенно · выдача на точке</p>
+      </div>
     </div>
-    <div class="os-items" id="os-items"></div>
-    <div class="os-row"><span>Итого</span><b id="os-total">0 Br</b></div>
-    <div class="os-timer"><span>Осталось около</span><b id="os-timer">--:--</b></div>
-    <p id="os-note" class="os-note hidden">🎉 Заказ готов! Можно забирать.</p>
+
+    <div id="order-status" class="order-status hidden">
+      <div class="os-top">
+        <div><div class="os-label">Ваш заказ</div><div class="os-num">№<span id="os-num">–</span></div></div>
+        <div class="os-pill" id="os-pill">Принят</div>
+      </div>
+      <div class="os-items" id="os-items"></div>
+      <div class="os-row"><span>Итого</span><b id="os-total">0 Br</b></div>
+      <div class="os-timer"><span>Осталось около</span><b id="os-timer">--:--</b></div>
+      <p id="os-note" class="os-note hidden">🎉 Заказ готов! Можно забирать.</p>
+    </div>
+
+    <div id="cats" class="cats"></div>
+    <div id="list"></div>
   </div>
 
-  <div id="cats" class="cats"></div>
-  <div id="list"></div>
+  <div id="view-orders" class="view hidden">
+    <div id="my-orders"></div>
+    <div id="my-orders-empty" class="empty-state hidden">
+      <div style="font-size:44px;margin-bottom:10px">🧁</div>
+      <b style="display:block;font-family:'Fraunces',serif;font-size:19px;color:var(--espresso);margin-bottom:6px">У вас пока нет заказов</b>
+      Откройте «🍰 Меню» — выберите кофе, оформите заказ, и он появится здесь
+      <div style="margin-top:14px"><button class="btn" id="empty-go-menu" style="max-width:240px;margin:0 auto">Перейти в меню →</button></div>
+    </div>
+  </div>
 </div>
 
 <div id="cart-bar" class="cart-bar hidden">
@@ -363,7 +418,7 @@ function renderCartBar() {
   const badge = $('cart-badge');
   badge.textContent = count;
   badge.classList.toggle('show', count > 0);
-  if (cart.length) $('cart-bar').classList.remove('hidden');
+  if (cart.length && activeView === 'menu') $('cart-bar').classList.remove('hidden');
   else $('cart-bar').classList.add('hidden');
 }
 
@@ -427,6 +482,8 @@ async function submitOrder() {
     renderOrderCard();
     showSuccess();
     pollClientOrder();
+    loadMyOrders();
+    switchView('orders');
   } catch (e) {
     console.error('Order submit failed:', e);
     $('success-title').textContent = 'Не удалось отправить заказ';
@@ -479,6 +536,152 @@ function tickClientOrder() {
   $('os-timer').textContent = fmtCountdown(Math.max(0, currentOrder.readyAt - Date.now()));
 }
 
+let myOrders = [];
+let activeView = 'menu';
+
+function switchView(name) {
+  activeView = name;
+  $('view-menu').classList.toggle('hidden', name !== 'menu');
+  $('view-orders').classList.toggle('hidden', name !== 'orders');
+  $('view-tab-menu').classList.toggle('active', name === 'menu');
+  $('view-tab-orders').classList.toggle('active', name === 'orders');
+  $('cart-bar').classList.toggle('hidden', name !== 'menu' || cart.length === 0);
+  if (name === 'orders') loadMyOrders();
+}
+
+function activeOrderCount() {
+  return myOrders.filter((o) => o.status === 'new' || o.status === 'preparing').length;
+}
+
+function updateOrdersBadge() {
+  const n = activeOrderCount();
+  const badge = $('orders-badge');
+  badge.textContent = String(n);
+  badge.classList.toggle('hidden', n === 0);
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function fmtTime(ms) { const d = new Date(ms); const p = (n) => String(n).padStart(2, '0'); return `${p(d.getHours())}:${p(d.getMinutes())}`; }
+
+function statusLabel(status) {
+  switch (status) {
+    case 'new': return 'Принят';
+    case 'preparing': return 'Готовится';
+    case 'ready': return 'Готов';
+    case 'cancelled': return 'Отменён';
+    default: return status || '—';
+  }
+}
+
+async function loadMyOrders() {
+  if (!tg || !tg.initData) { renderMyOrders([]); return; }
+  try {
+    const r = await fetch('/api/client/orders', { headers: { 'X-Telegram-Init-Data': tg.initData } });
+    if (!r.ok) { renderMyOrders([]); return; }
+    myOrders = await r.json();
+    renderMyOrders();
+    updateOrdersBadge();
+  } catch (e) {
+    // keep previous list on transient network errors
+  }
+}
+
+function renderMyOrders() {
+  const list = $('my-orders');
+  const empty = $('my-orders-empty');
+  if (!myOrders.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  const FIVE_MIN = 5 * 60 * 1000;
+  list.innerHTML = myOrders.slice().sort((a, b) => b.number - a.number).map((o) => {
+    const active = o.status === 'new' || o.status === 'preparing';
+    const remaining = o.readyAt - Date.now();
+    const cancelable = active && remaining > FIVE_MIN;
+    const warn = active
+      ? (remaining > FIVE_MIN
+          ? `<div class="warn soft">🛎 Отменить заказ можно, но не позднее чем за 5 минут до готовности</div>`
+          : `<div class="warn hard">⚠️ Отмену уже нельзя сделать — до готовности меньше 5 минут</div>`)
+      : '';
+    const countdown = active
+      ? `<div class="oc-countdown ${remaining <= 0 ? 'due' : ''}"><span>Осталось до готовности</span><b data-countdown-for="${o.number}">${fmtCountdown(Math.max(0, remaining))}</b></div>`
+      : '';
+    const cancelBtn = active
+      ? `<button class="cancel-btn" data-cancel="${o.number}" ${cancelable ? '' : 'disabled'}>${cancelable ? 'Отменить заказ' : 'Отмена недоступна (≤ 5 мин)'}</button>`
+      : '';
+    return `
+      <div class="order-card ${escapeHtml(o.status)}">
+        <div class="oc-top">
+          <div><div class="oc-label">Заказ</div><div class="oc-num">№${o.number}</div></div>
+          <div class="oc-pill ${escapeHtml(o.status)}">${statusLabel(o.status)}</div>
+        </div>
+        <div class="oc-items">${(o.items || []).map((i) => `${escapeHtml(i.qty)}× ${escapeHtml(i.name)}`).join(', ')}</div>
+        <div class="oc-meta">
+          <span>Итого <b>${money(o.total)}</b></span>
+          <span>${o.payment === 'cash' ? '💵 Наличные' : '💳 Карта'}</span>
+          <span>${fmtTime(o.createdAt)}</span>
+        </div>
+        ${countdown}
+        ${warn}
+        ${cancelBtn}
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-cancel]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      cancelOrderUI(Number(btn.dataset.cancel));
+    });
+  });
+}
+
+function confirmCancelDialog() {
+  return new Promise((resolve) => {
+    if (tg && tg.showConfirm) tg.showConfirm('Отменить заказ?', (ok) => resolve(!!ok));
+    else resolve(window.confirm('Отменить заказ?'));
+  });
+}
+
+function showError(msg) {
+  if (tg && tg.showAlert) tg.showAlert(msg);
+  else window.alert(msg);
+}
+
+async function cancelOrderUI(number) {
+  const ok = await confirmCancelDialog();
+  if (!ok) return;
+  try {
+    const r = await fetch(`/api/client/orders/${number}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || '' },
+    });
+    if (r.ok) {
+      await loadMyOrders();
+      pollClientOrder();
+      return;
+    }
+    const err = await r.json().catch(() => ({}));
+    showError(err.error || 'Не удалось отменить заказ');
+    await loadMyOrders();
+  } catch (e) {
+    showError('Не удалось связаться с сервером. Попробуйте ещё раз.');
+  }
+}
+
+function tickMyOrders() {
+  document.querySelectorAll('[data-countdown-for]').forEach((el) => {
+    const num = Number(el.dataset.countdownFor);
+    const order = myOrders.find((o) => o.number === num);
+    if (!order) return;
+    el.textContent = fmtCountdown(Math.max(0, order.readyAt - Date.now()));
+  });
+}
+
+$('view-tab-menu').addEventListener('click', () => switchView('menu'));
+$('view-tab-orders').addEventListener('click', () => switchView('orders'));
+$('empty-go-menu').addEventListener('click', () => switchView('menu'));
+
 $('cart-btn').addEventListener('click', () => { if (cart.length) openCheckout(); });
 $('cart-checkout-btn').addEventListener('click', openCheckout);
 $('order-submit').addEventListener('click', submitOrder);
@@ -499,8 +702,11 @@ document.querySelectorAll('input[name="pay"]').forEach((r) => {
   etaMinutes = 15;
   loadMenu();
   pollClientOrder();
+  loadMyOrders();
   setInterval(tickClientOrder, 1000);
+  setInterval(tickMyOrders, 1000);
   setInterval(pollClientOrder, 5000);
+  setInterval(loadMyOrders, 5000);
 })();
 </script>
 </body>

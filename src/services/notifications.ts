@@ -53,6 +53,32 @@ export async function notifyClientOrderReady(order: Order): Promise<void> {
   }
 }
 
+export async function notifyBaristasOrderCancelled(order: Order): Promise<void> {
+  const items = order.items.map((item) => `• ${item.qty}× ${item.name}`).join('\n');
+  const text = `❌ <b>Заказ №${order.number} отменён клиентом</b>\n${items || '—'}\nСумма была: ${formatMoney(order.total)}`;
+  const chatIds = getBaristaChatIds();
+  for (const chatId of chatIds) {
+    try {
+      await bot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });
+    } catch (err) {
+      console.error(`Failed to notify barista ${chatId} about cancelled order ${order.number}`, err);
+    }
+  }
+}
+
+export async function notifyClientOrderCancelled(order: Order): Promise<void> {
+  if (!order.clientTelegramId) return;
+  try {
+    await bot.api.sendMessage(
+      order.clientTelegramId,
+      `✅ <b>Заказ №${order.number} отменён.</b>\nОплата не взимается / деньги вернутся на кассе при необходимости.`,
+      { parse_mode: 'HTML' },
+    );
+  } catch (err) {
+    console.error(`Failed to confirm cancellation to client for order ${order.number}`, err);
+  }
+}
+
 export async function notifyBaristasOrderReady(order: Order): Promise<void> {
   const text = `☕ <b>Заказ №${order.number} готов к выдаче</b>\nКлиент: ${clientInfo(order)}\nСумма: ${formatMoney(order.total)}`;
   const chatIds = getBaristaChatIds();
