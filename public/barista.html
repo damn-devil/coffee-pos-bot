@@ -53,6 +53,11 @@
   /* Scroll areas */
   .main-scroll { flex:1; min-height:0; overflow-y:auto; padding:12px 14px 96px; display:flex; flex-direction:column; gap:14px; -webkit-overflow-scrolling:touch; }
   .list { flex:1; min-height:0; overflow-y:auto; padding:12px 14px 24px; display:flex; flex-direction:column; gap:12px; -webkit-overflow-scrolling:touch; }
+  /* flex-shrink:0 so rows don't collapse (overflow:hidden kills min-height:auto) */
+  .list > * { flex-shrink:0; }
+  /* Editor list lives inside scrollable .main-scroll — let it size to content instead of being clamped by the admin block */
+  .main-scroll > .list { flex:0 0 auto; overflow-y:visible; }
+  .barista-admin { flex-shrink:0; }
 
   /* ===== Orders tab ===== */
   .order { background:var(--card); border:1px solid var(--edge); border-radius:20px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; animation:cardIn .35s ease both; }
@@ -177,7 +182,7 @@
   <p>Добавьте Telegram ID бариста — он получит уведомления о заказах и доступ к панели.</p>
   <div id="barista-list"></div>
   <div class="admin-add-row">
-    <input id="barista-add-id" inputmode="numeric" placeholder="Telegram ID, напр. 7760685021" />
+    <input id="barista-add-id" inputmode="numeric" placeholder="Telegram ID, напр. 1234567890" />
     <input id="barista-add-name" placeholder="Имя (необязательно)" maxlength="120" />
     <button id="barista-add-btn" class="btn btn-primary"><span class="tic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span> Добавить баристу</button>
   </div>
