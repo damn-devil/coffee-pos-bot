@@ -339,6 +339,8 @@ async function loadMenu() {
     $('list').innerHTML = '<div class="empty-state">Не удалось загрузить меню.<br/>Проверьте соединение и закройте окно.</div>';
     return;
   }
+  menu.categories = [...(menu.categories || [])].sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
+  menu.products = [...(menu.products || [])].sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
   renderCats();
   renderList();
 }
@@ -425,7 +427,7 @@ function renderCartBar() {
 function renderCartPanel() {
   const detailed = detailedCart();
   const total = cartTotal();
-  $('checkout-summary').innerHTML = detailed.map((c) => `
+  $('checkout-summary').innerHTML = [...detailed].sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })).map((c) => `
     <div class="opt" style="cursor:default"><span>${c.emoji} ${c.qty} × ${c.name}</span><b style="margin-left:auto">${money(c.product.price * c.qty)}</b></div>
   `).join('') + `<div class="opt" style="cursor:default;border:1.5px dashed rgba(44,26,16,.35);background:transparent;box-shadow:none"><span style="font-size:14px"><b>Итого</b></span><b style="margin-left:auto;font-size:17px">${money(total)}</b></div>`;
   $('cart-bar').classList.add('hidden');

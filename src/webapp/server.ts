@@ -104,6 +104,9 @@ export function createApp(): Express {
     if (!auth.ok) return;
     const categories = await prisma.menuCategory.findMany({ orderBy: { sort: 'asc' } });
     const products = await prisma.menuProduct.findMany({ orderBy: { sort: 'asc' } });
+    const ruName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' });
+    categories.sort(ruName);
+    products.sort(ruName);
     res.json(jsonSafe({
       categories,
       products: products.map((p) => ({ ...p, image: p.image ?? undefined })),

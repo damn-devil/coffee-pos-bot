@@ -210,6 +210,8 @@ async function loadMenu() {
     $('list').innerHTML = `<div class="empty-state">Не удалось загрузить меню:<br/><b>${esc(e.message)}</b><br/><br/>Откройте страницу из бота в Telegram</div>`;
     return;
   }
+  menu.categories = [...(menu.categories || [])].sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
+  menu.products = [...(menu.products || [])].sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
   render();
 }
 
@@ -270,7 +272,7 @@ function bindListEvents() {
 
 /* ---------- product sheet ---------- */
 function fillCategorySelect(selected) {
-  $('f-category').innerHTML = menu.categories.map((c) => `<option value="${esc(c.id)}" ${c.id === selected ? 'selected' : ''}>${esc(c.emoji)} ${esc(c.name)}</option>`).join('');
+  $('f-category').innerHTML = [...menu.categories].sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })).map((c) => `<option value="${esc(c.id)}" ${c.id === selected ? 'selected' : ''}>${esc(c.emoji)} ${esc(c.name)}</option>`).join('');
 }
 
 function setImagePreview(dataUri) {

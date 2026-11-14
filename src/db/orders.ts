@@ -61,7 +61,7 @@ function toOrder(row: OrderRow): Order {
     createdAt: Number(row.createdAt),
     updatedAt: Number(row.updatedAt),
     readyAt: Number(row.readyAt),
-    items: parseItems(row.items),
+    items: parseItems(row.items).sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })),
   };
 }
 
@@ -92,6 +92,8 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
   if (items.length === 0) {
     throw new Error('No valid items in order');
   }
+
+  items.sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
 
   const etaMinutes = Math.max(1, Math.floor(Number(data.etaMinutes) || 10));
   const now = Date.now();
@@ -146,6 +148,7 @@ export async function getLatestOrderByClient(clientTelegramId: string): Promise<
     orderBy: { number: 'desc' },
   });
   if (!order) return null;
+
   const row: OrderRow = {
     number: order.number,
     items: order.items,
@@ -171,6 +174,7 @@ export async function getLatestActiveOrderByClient(clientTelegramId: string, win
     orderBy: { number: 'desc' },
   });
   if (!order) return null;
+
   const row: OrderRow = {
     number: order.number,
     items: order.items,

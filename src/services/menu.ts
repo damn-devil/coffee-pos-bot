@@ -46,9 +46,16 @@ function extractVolume(desc: string): string {
   return m ? m[0].trim() : '';
 }
 
+const byName = <T extends { name: string }>(a: T, b: T): number =>
+  a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' });
+
 let cache: Menu | null = null;
 let cacheAt = 0;
 const CACHE_TTL_MS = 60_000;
+
+export function sortByName<T extends { name: string }>(arr: T[]): T[] {
+  return [...arr].sort(byName);
+}
 
 export function invalidateMenuCache(): void {
   cache = null;
@@ -118,9 +125,11 @@ export async function getMenu(): Promise<Menu> {
     where: { active: true },
     orderBy: { sort: 'asc' },
   });
+  categories.sort(byName);
+  products.sort(byName);
 
   if (!products.length) {
-    cache = DEFAULT_MENU;
+    cache = { categories: sortByName(DEFAULT_MENU.categories), products: sortByName(DEFAULT_MENU.products) };
     cacheAt = now;
     return cache;
   }
