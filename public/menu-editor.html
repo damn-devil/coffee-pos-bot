@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>KAVA — Редактор меню</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #17100b; --card: #241712; --card-lift: #2e1e16; --edge: #3a261c;
+    --cream: #f6e8d8; --muted: #a98a76; --caramel: #e0a35c;
+    --terra: #d2603a; --terra-deep: #b6492a;
+    --ok: #6fce8e; --danger: #ff6b57;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; }
+  body { font-family:'Manrope',system-ui,sans-serif; color:var(--cream); height:100dvh; overflow:hidden; display:flex; flex-direction:column;
+    background: radial-gradient(900px 480px at 80% -10%, rgba(224,163,92,.15), transparent 55%), var(--bg); }
+  .header { padding:14px 16px; border-bottom:1px solid var(--edge); display:flex; align-items:center; gap:12px; background:linear-gradient(180deg, rgba(46,30,22,.7), transparent); }
+  .back-btn { width:44px; height:44px; border-radius:12px; border:1px solid var(--edge); background:var(--card); color:var(--cream); font-size:18px; cursor:pointer; }
+  .brand-mark { width:44px; height:44px; border-radius:12px; background:radial-gradient(circle at 35% 30%, #e28057, var(--terra) 70%); display:flex; align-items:center; justify-content:center; font-size:21px; }
+  .header h1 { font-family:'Fraunces',serif; font-weight:700; font-size:18px; }
+  .header p { font-size:10.5px; color:var(--muted); letter-spacing:.07em; text-transform:uppercase; font-weight:700; margin-top:2px; }
+
+  .stats { display:flex; gap:8px; padding:12px 14px 0; }
+  .stat { flex:1; background:var(--card); border:1px solid var(--edge); border-radius:14px; padding:9px 12px; }
+  .stat b { font-family:'Fraunces',serif; font-size:19px; color:var(--caramel); }
+  .stat span { display:block; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; font-weight:700; }
+
+  .list { flex:1; overflow-y:auto; padding:12px 14px 90px; display:flex; flex-direction:column; gap:14px; }
+
+  .cat-block { background:var(--card); border:1px solid var(--edge); border-radius:18px; overflow:hidden; }
+  .cat-head { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--card-lift); border-bottom:1px solid var(--edge); }
+  .cat-emoji { font-size:19px; }
+  .cat-name { font-family:'Fraunces',serif; font-weight:700; font-size:15px; flex:1; }
+  .icon-btn { width:36px; height:36px; border-radius:10px; border:1px solid var(--edge); background:transparent; color:var(--cream); font-size:15px; cursor:pointer; }
+  .icon-btn.danger { color:var(--danger); border-color:rgba(255,107,87,.35); }
+
+  .product { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.04); }
+  .product:last-child { border-bottom:0; }
+  .thumb { width:52px; height:52px; border-radius:13px; object-fit:cover; background:var(--card-lift); flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .p-info { flex:1; min-width:0; }
+  .p-name { font-weight:800; font-size:13.5px; }
+  .p-desc { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .p-meta { font-size:12px; color:var(--caramel); font-weight:800; margin-top:2px; }
+  .p-off { opacity:.45; filter:grayscale(.6); }
+
+  .fab { position:fixed; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); left:14px; right:14px; z-index:30;
+    border:none; border-radius:18px; padding:16px; background:linear-gradient(160deg, #d2603a, var(--terra-deep)); color:#fff;
+    font-family:'Manrope'; font-size:15px; font-weight:800; box-shadow:0 10px 26px rgba(210,96,58,.4); cursor:pointer; }
+
+  /* sheets */
+  .overlay { position:fixed; inset:0; z-index:50; background:rgba(23,16,11,.7); backdrop-filter: blur(6px); display:none; align-items:flex-end; }
+  .overlay.open { display:flex; }
+  .sheet { background:var(--bg); width:100%; border-radius:22px 22px 0 0; padding:14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); max-height:92%; overflow-y:auto; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--edge); }
+  .grabber { width:44px; height:5px; border-radius:3px; background:rgba(246,232,216,.2); margin:0 auto; }
+  .sheet h3 { font-family:'Fraunces',serif; font-size:19px; }
+
+  .field label { display:block; font-size:11px; color:var(--muted); font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
+  .field input, .field select { width:100%; padding:12px; border-radius:13px; background:var(--card); border:1px solid var(--edge); color:var(--cream); font-size:15px; font-family:'Manrope'; font-weight:600; }
+  .row2 { display:flex; gap:10px; }
+  .row2 > .field { flex:1; }
+
+  .img-picker { display:flex; align-items:center; gap:12px; }
+  .img-preview { width:84px; height:84px; border-radius:16px; object-fit:cover; background:var(--card); border:1px dashed var(--edge); display:flex; align-items:center; justify-content:center; font-size:26px; color:var(--muted); }
+  .img-actions { display:flex; flex-direction:column; gap:8px; flex:1; }
+  .btn { border:none; border-radius:13px; padding:13px; font-family:'Manrope'; font-weight:800; font-size:14px; cursor:pointer; }
+  .btn-primary { background:linear-gradient(160deg,#d2603a,var(--terra-deep)); color:#fff; }
+  .btn-ghost { background:transparent; border:1px solid var(--edge); color:var(--cream); }
+  .btn-ok { background:var(--ok); color:#0b2413; }
+  .btn-danger { background:rgba(255,107,87,.15); color:var(--danger); border:1px solid rgba(255,107,87,.35); }
+
+  /* toast */
+  .toast { position:fixed; bottom:110px; left:50%; transform:translate(-50%, 20px); z-index:60; background:var(--card-lift); border:1px solid var(--edge); color:var(--cream); padding:12px 18px; border-radius:13px; font-size:13px; opacity:0; pointer-events:none; transition:all .25s; white-space:nowrap; }
+  .toast.show { opacity:1; transform:translate(-50%, 0); }
+
+  .barista-admin { background:var(--card); border:1px solid var(--edge); border-radius:18px; padding:14px; }
+  .barista-admin h3 { font-size:15px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+  .barista-admin p { font-size:11.5px; color:var(--muted); margin-bottom:12px; }
+  .barista-row { display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .barista-row:last-child { border-bottom:0; }
+  .b-avatar { width:40px; height:40px; border-radius:12px; background:var(--card-lift); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; color:var(--caramel); }
+  .b-info { flex:1; min-width:0; }
+  .b-name { font-size:13.5px; font-weight:800; }
+  .b-id { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .b-role { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ok); background:rgba(111,206,142,.12); border-radius:8px; padding:4px 8px; }
+  .admin-add-row { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+  .admin-add-row input { width:100%; padding:12px; border-radius:13px; background:var(--card-lift); border:1px solid var(--edge); color:var(--cream); font-size:14px; }
+
+  .empty-state { text-align:center; color:var(--muted); padding:50px 20px; font-size:13px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="header">
+  <button class="back-btn" id="back-btn" aria-label="Назад к заказам">←</button>
+  <div class="brand-mark">📝</div>
+  <div>
+    <h1>Редактор меню</h1>
+    <p>только для бариста</p>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><b id="stat-products">–</b><span>позиций</span></div>
+  <div class="stat"><b id="stat-categories">–</b><span>категорий</span></div>
+  <div class="stat"><b id="stat-images">–</b><span>с фото</span></div>
+</div>
+
+<div id="list" class="list"></div>
+<div id="empty" class="empty-state hidden" style="display:none"></div>
+
+<section class="barista-admin hidden" id="barista-admin-section" style="display:none">
+  <h3>👥 Бариста <span style="font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">только для админа</span></h3>
+  <p>Добавьте Telegram ID бариста — он получит уведомления о заказах и доступ к панели.</p>
+  <div id="barista-list"></div>
+  <div class="admin-add-row">
+    <input id="barista-add-id" inputmode="numeric" placeholder="Telegram ID, напр. 7760685021" />
+    <input id="barista-add-name" placeholder="Имя (необязательно)" maxlength="120" />
+    <button id="barista-add-btn" class="btn btn-primary">Добавить баристу</button>
+  </div>
+</section>
+
+<button class="fab" id="add-product-btn">➕ Добавить товар</button>
+
+<!-- product sheet -->
+<div class="overlay" id="product-overlay">
+  <div class="sheet">
+    <div class="grabber"></div>
+    <h3 id="sheet-title">Новый товар</h3>
+    <div class="img-picker">
+      <div class="img-preview" id="img-preview">📷</div>
+      <div class="img-actions">
+        <button class="btn btn-ghost" id="pick-image-btn">🖼 Выбрать фото</button>
+        <button class="btn btn-ghost" id="remove-image-btn" style="display:none">🗑 Удалить фото</button>
+        <input type="file" id="image-input" accept="image/*" style="display:none">
+      </div>
+    </div>
+    <div class="field"><label for="f-name">Название</label><input id="f-name" placeholder="Капучино" maxlength="80"></div>
+    <div class="row2">
+      <div class="field"><label for="f-price">Цена, Br</label><input id="f-price" type="number" inputmode="decimal" min="0" step="0.1" placeholder="4.5"></div>
+      <div class="field"><label for="f-volume">Граммовка / объём</label><input id="f-volume" placeholder="250 мл" maxlength="40"></div>
+    </div>
+    <div class="field"><label for="f-emoji">Эмодзи</label><input id="f-emoji" placeholder="☕" maxlength="4"></div>
+    <div class="field"><label for="f-category">Категория</label><select id="f-category"></select></div>
+    <div class="field"><label for="f-desc">Описание (необязательно)</label><input id="f-desc" placeholder="Кофе с молочной пеной" maxlength="300"></div>
+    <div class="row2">
+      <button class="btn btn-ghost" id="cancel-product-btn" style="flex:1">Отмена</button>
+      <button class="btn btn-primary" id="save-product-btn" style="flex:1">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- category sheet -->
+<div class="overlay" id="category-overlay">
+  <div class="sheet">
+    <div class="grabber"></div>
+    <h3 id="category-title">Категория</h3>
+    <div class="row2">
+      <div class="field" style="max-width:110px"><label for="c-emoji">Эмодзи</label><input id="c-emoji" placeholder="☕" maxlength="4"></div>
+      <div class="field"><label for="c-name">Название</label><input id="c-name" placeholder="Кофе" maxlength="60"></div>
+    </div>
+    <div class="row2">
+      <button class="btn btn-ghost" id="cancel-category-btn" style="flex:1">Отмена</button>
+      <button class="btn btn-primary" id="save-category-btn" style="flex:1">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+const $ = (id) => document.getElementById(id);
+
+const headers = () => ({ 'Content-Type': 'application/json', 'X-Telegram-Init-Data': (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || '' });
+
+let menu = { categories: [], products: [] };
+let editId = null;
+let imageData = null;
+
+if (tg) {
+  tg.ready();
+  if (tg.setHeaderColor) tg.setHeaderColor('#17100b');
+  if (tg.setBackgroundColor) tg.setBackgroundColor('#17100b');
+  if (tg.expand) tg.expand();
+}
+
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function money(n) { return Number(n || 0).toLocaleString('ru-RU') + ' Br'; }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200); }
+function confirmDlg(msg) { return new Promise((res) => { if (tg && tg.showConfirm) tg.showConfirm(msg, (ok) => res(!!ok)); else res(window.confirm(msg)); }); }
+
+async function api(path, opts) {
+  const r = await fetch(path, { ...(opts || {}), headers: headers() });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || ('HTTP ' + r.status)); }
+  return r.json();
+}
+
+async function loadMenu() {
+  try {
+    menu = await api('/api/barista/menu');
+  } catch (e) {
+    $('list').innerHTML = `<div class="empty-state">Не удалось загрузить меню:<br/><b>${esc(e.message)}</b><br/><br/>Откройте страницу из бота в Telegram</div>`;
+    return;
+  }
+  render();
+}
+
+function render() {
+  $('stat-products').textContent = menu.products.length;
+  $('stat-categories').textContent = menu.categories.length;
+  $('stat-images').textContent = menu.products.filter((p) => p.image).length;
+
+  const byCat = new Map();
+  for (const c of menu.categories) byCat.set(c.id, []);
+  for (const p of menu.products) {
+    if (!byCat.has(p.categoryId)) byCat.set(p.categoryId, []);
+    byCat.get(p.categoryId).push(p);
+  }
+
+  const catName = (id) => { const c = menu.categories.find((x) => x.id === id); return c ? `${c.emoji} ${c.name}` : 'Без категории'; };
+
+  $('list').innerHTML = menu.categories.map((cat) => {
+    const items = byCat.get(cat.id) || [];
+    return `
+      <section class="cat-block">
+        <div class="cat-head">
+          <span class="cat-emoji">${esc(cat.emoji)}</span>
+          <span class="cat-name">${esc(cat.name)}</span>
+          <button class="icon-btn" data-add-to-cat="${cat.id}" title="Добавить товар в категорию">➕</button>
+          <button class="icon-btn" data-edit-cat="${cat.id}" title="Переименовать">✏️</button>
+          <button class="icon-btn danger" data-del-cat="${cat.id}" title="Удалить категорию">🗑</button>
+        </div>
+        ${items.length ? items.map((p) => `
+          <div class="product ${p.active === false ? 'p-off' : ''}">
+            ${p.image ? `<img class="thumb" src="${esc(p.image)}" alt="${esc(p.name)}">` : `<div class="thumb">${esc(p.emoji || '☕')}</div>`}
+            <div class="p-info">
+              <div class="p-name">${esc(p.name)}${p.active === false ? ' <span style="color:var(--muted);font-weight:600">(скрыт)</span>' : ''}</div>
+              ${p.desc ? `<div class="p-desc">${esc(p.desc)}</div>` : ''}
+              <div class="p-meta">${money(p.price)}${p.volume ? ` · ${esc(p.volume)}` : ''}</div>
+            </div>
+            <button class="icon-btn" data-edit-prod="${p.id}" title="Редактировать">✏️</button>
+            <button class="icon-btn danger" data-del-prod="${p.id}" title="Удалить">🗑</button>
+          </div>`).join('') : `<div class="empty-state" style="padding:16px">Пусто. Нажмите ➕ чтобы добавить товар</div>`}
+      </section>`;
+  }).join('') + `
+    <button class="btn btn-ghost" id="add-category-btn" style="margin-bottom:8px">➕ Добавить категорию</button>`;
+
+  bindListEvents();
+}
+
+function bindListEvents() {
+  $('list').querySelectorAll('[data-add-to-cat]').forEach((b) => b.addEventListener('click', () => openProductSheet(null, b.dataset.addToCat)));
+  $('list').querySelectorAll('[data-edit-cat]').forEach((b) => b.addEventListener('click', () => openCategorySheet(b.dataset.editCat)));
+  $('list').querySelectorAll('[data-del-cat]').forEach((b) => b.addEventListener('click', () => deleteCategory(b.dataset.delCat)));
+  $('list').querySelectorAll('[data-edit-prod]').forEach((b) => b.addEventListener('click', () => openProductSheet(b.dataset.editProd, null)));
+  $('list').querySelectorAll('[data-del-prod]').forEach((b) => b.addEventListener('click', () => deleteProduct(b.dataset.delProd)));
+  const addCat = $('list').querySelector('#add-category-btn');
+  if (addCat) addCat.addEventListener('click', () => openCategorySheet(null));
+}
+
+/* ---------- product sheet ---------- */
+function fillCategorySelect(selected) {
+  $('f-category').innerHTML = menu.categories.map((c) => `<option value="${esc(c.id)}" ${c.id === selected ? 'selected' : ''}>${esc(c.emoji)} ${esc(c.name)}</option>`).join('');
+}
+
+function setImagePreview(dataUri) {
+  const prev = $('img-preview');
+  const rm = $('remove-image-btn');
+  if (dataUri) {
+    prev.outerHTML = `<img class="img-preview" id="img-preview" src="${dataUri}" alt="preview">`;
+    rm.style.display = 'block';
+  } else {
+    const img = $('img-preview');
+    img.outerHTML = `<div class="img-preview" id="img-preview">📷</div>`;
+    rm.style.display = 'none';
+  }
+}
+
+function openProductSheet(id, presetCategory) {
+  editId = id || null;
+  imageData = null;
+  const p = id ? menu.products.find((x) => x.id === id) : null;
+  $('sheet-title').textContent = p ? 'Редактировать товар' : 'Новый товар';
+  $('f-name').value = p ? p.name : '';
+  $('f-price').value = p ? p.price : '';
+  $('f-emoji').value = p ? p.emoji : '☕';
+  $('f-desc').value = p ? (p.desc || '') : '';
+  $('f-volume').value = p ? (p.volume || '') : '';
+  fillCategorySelect(p ? p.categoryId : (presetCategory || (menu.categories[0] && menu.categories[0].id) || ''));
+  imageData = p ? p.image || null : null;
+  setImagePreview(imageData);
+  $('product-overlay').classList.add('open');
+}
+
+function closeSheets() {
+  $('product-overlay').classList.remove('open');
+  $('category-overlay').classList.remove('open');
+}
+
+async function saveProduct() {
+  const name = $('f-name').value.trim();
+  const price = Number(String($('f-price').value).replace(',', '.'));
+  if (!name) { toast('Введите название'); return; }
+  if (!Number.isFinite(price) || price < 0) { toast('Некорректная цена'); return; }
+  const payload = {
+    name,
+    price,
+    desc: $('f-desc').value.trim(),
+    emoji: ($('f-emoji').value || '☕').trim(),
+    categoryId: $('f-category').value,
+    volume: $('f-volume').value.trim(),
+    image: imageData,
+  };
+  try {
+    if (editId) await api('/api/barista/menu/products/' + encodeURIComponent(editId), { method: 'PUT', body: JSON.stringify(payload) });
+    else await api('/api/barista/menu/products', { method: 'POST', body: JSON.stringify(payload) });
+    toast('Сохранено');
+    closeSheets();
+    await loadMenu();
+  } catch (e) {
+    toast(e.message || 'Не удалось сохранить');
+  }
+}
+
+async function deleteProduct(id) {
+  const p = menu.products.find((x) => x.id === id);
+  const ok = await confirmDlg(`Удалить «${p ? p.name : 'товар'}»?`);
+  if (!ok) return;
+  try {
+    await api('/api/barista/menu/products/' + encodeURIComponent(id), { method: 'DELETE' });
+    toast('Удалено');
+    await loadMenu();
+  } catch (e) {
+    toast(e.message || 'Не удалось удалить');
+  }
+}
+
+/* ---------- category sheet ---------- */
+let editCategoryId = null;
+function openCategorySheet(id) {
+  editCategoryId = id || null;
+  const c = id ? menu.categories.find((x) => x.id === id) : null;
+  $('category-title').textContent = c ? 'Редактировать категорию' : 'Новая категория';
+  $('c-name').value = c ? c.name : '';
+  $('c-emoji').value = c ? c.emoji : '☕';
+  $('category-overlay').classList.add('open');
+}
+
+async function saveCategory() {
+  const name = $('c-name').value.trim();
+  if (!name) { toast('Введите название категории'); return; }
+  const payload = { name, emoji: ($('c-emoji').value || '📦').trim() };
+  try {
+    if (editCategoryId) await api('/api/barista/menu/categories/' + encodeURIComponent(editCategoryId), { method: 'PUT', body: JSON.stringify(payload) });
+    else await api('/api/barista/menu/categories', { method: 'POST', body: JSON.stringify(payload) });
+    toast('Сохранено');
+    closeSheets();
+    await loadMenu();
+  } catch (e) {
+    toast(e.message || 'Не удалось сохранить');
+  }
+}
+
+async function deleteCategory(id) {
+  const c = menu.categories.find((x) => x.id === id);
+  const ok = await confirmDlg(`Удалить категорию «${c ? c.name : ''}»?`);
+  if (!ok) return;
+  try {
+    await api('/api/barista/menu/categories/' + encodeURIComponent(id), { method: 'DELETE' });
+    toast('Категория удалена');
+    await loadMenu();
+  } catch (e) {
+    toast(e.message || 'Не удалось удалить');
+  }
+}
+
+/* ---------- image picking ---------- */
+function downscaleImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 512;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#241712';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+$('pick-image-btn').addEventListener('click', () => $('image-input').click());
+$('image-input').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    imageData = await downscaleImage(file);
+    setImagePreview(imageData);
+  } catch (err) {
+    toast('Не удалось обработать фото');
+  }
+});
+$('remove-image-btn').addEventListener('click', () => { imageData = null; setImagePreview(null); });
+
+/* ---------- bindings ---------- */
+$('back-btn').addEventListener('click', () => { if (tg && tg.close) tg.close(); });
+$('add-product-btn').addEventListener('click', () => openProductSheet(null, null));
+$('save-product-btn').addEventListener('click', saveProduct);
+$('cancel-product-btn').addEventListener('click', closeSheets);
+$('save-category-btn').addEventListener('click', saveCategory);
+$('cancel-category-btn').addEventListener('click', closeSheets);
+$('product-overlay').addEventListener('click', (e) => { if (e.target === $('product-overlay')) closeSheets(); });
+$('category-overlay').addEventListener('click', (e) => { if (e.target === $('category-overlay')) closeSheets(); });
+
+/* ---------- admin: baristas ---------- */
+async function loadBaristas() {
+  try {
+    const list = await api('/api/admin/baristas');
+    const section = $('barista-admin-section');
+    section.classList.remove('hidden');
+    section.style.display = 'block';
+    $('barista-list').innerHTML = list.map((b) => `
+      <div class="barista-row">
+        <div class="b-avatar">${esc((b.name || String(b.id)).charAt(0).toUpperCase())}</div>
+        <div class="b-info">
+          <div class="b-name">${esc(b.name || 'ID ' + b.id)}</div>
+          <div class="b-id">id ${esc(b.id)}</div>
+        </div>
+        ${b.role === 'admin'
+          ? '<span class="b-role">админ</span>'
+          : `<button class="icon-btn danger" data-remove-barista="${b.id}" title="Удалить баристу">🗑</button>`}
+      </div>`).join('');
+    $('barista-list').querySelectorAll('[data-remove-barista]').forEach((btn) => {
+      btn.addEventListener('click', () => removeBaristaUI(Number(btn.dataset.removeBarista)));
+    });
+  } catch (e) {
+    $('barista-admin-section').classList.add('hidden');
+    $('barista-admin-section').style.display = 'none';
+  }
+}
+
+async function addBaristaUI() {
+  const id = $('barista-add-id').value.trim();
+  const name = $('barista-add-name').value.trim();
+  if (!id) { toast('Укажите Telegram ID'); return; }
+  try {
+    await api('/api/admin/baristas', { method: 'POST', body: JSON.stringify({ id, name }) });
+    toast('Бариста добавлен');
+    $('barista-add-id').value = '';
+    $('barista-add-name').value = '';
+    await loadBaristas();
+  } catch (e) {
+    toast(e.message || 'Не удалось добавить');
+  }
+}
+
+async function removeBaristaUI(id) {
+  const ok = await confirmDlg(`Удалить баристу ${id}?`);
+  if (!ok) return;
+  try {
+    await api('/api/admin/baristas/' + id, { method: 'DELETE' });
+    toast('Бариста удалён');
+    await loadBaristas();
+  } catch (e) {
+    toast(e.message || 'Не удалось удалить');
+  }
+}
+
+$('barista-add-btn').addEventListener('click', addBaristaUI);
+
+loadMenu();
+loadBaristas();
+</script>
+</body>
+</html>

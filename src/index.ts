@@ -4,12 +4,17 @@ import { registerStartHandlers } from './handlers/start.js';
 import { registerOrderHandlers } from './handlers/order.js';
 import { registerBaristaOrdersHandlers } from './handlers/orders.js';
 import { createApp } from './webapp/server.js';
+import { seedMenuIfEmpty } from './services/menu.js';
+import { seedBaristasIfEmpty } from './lib/baristas.js';
 
 async function main() {
   const env = loadEnv();
   registerStartHandlers();
   registerOrderHandlers();
   registerBaristaOrdersHandlers();
+
+  await seedMenuIfEmpty();
+  await seedBaristasIfEmpty();
 
   const app = createApp();
 

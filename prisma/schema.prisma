@@ -22,3 +22,34 @@ model Order {
   clientUsername   String?
   clientPhone      String?
 }
+
+model Barista {
+  id        BigInt @id
+  name      String @default("")
+  role      String @default("barista")
+  createdAt BigInt
+}
+
+model MenuCategory {
+  id        String   @id
+  name      String
+  emoji     String   @default("📦")
+  sort      Int      @default(0)
+  createdAt BigInt
+  updatedAt BigInt
+}
+
+model MenuProduct {
+  id         String  @id
+  categoryId String
+  name       String
+  price      Float
+  desc       String  @default("")
+  emoji      String  @default("☕")
+  image      String?
+  active     Boolean @default(true)
+  sort       Int     @default(0)
+  volume     String  @default("")
+  createdAt  BigInt
+  updatedAt  BigInt
+}

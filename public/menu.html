@@ -373,7 +373,7 @@ function renderList() {
       ${visual}
       <div class="info">
         <div class="name">${p.name}</div>
-        <div class="desc">${p.desc || ''}</div>
+        <div class="desc">${p.volume ? `<b style="color:var(--espresso)">${esc(p.volume)}</b>${p.desc ? ' · ' : ''}` : ''}${esc(p.desc || '')}</div>
         <div class="price">${money(p.price)}</div>
       </div>
       <div class="stepper">

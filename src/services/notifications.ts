@@ -1,5 +1,5 @@
 import { bot } from '../bot.js';
-import { getBaristaChatIds } from '../lib/chatIds.js';
+import { getBaristaChatIds } from '../lib/baristas.js';
 import type { Order } from '../db/orders.js';
 import { formatMoney, paymentLabel } from '../lib/format.js';
 
@@ -30,7 +30,7 @@ function buildBaristaMessage(order: Order): string {
 
 export async function notifyBaristasNewOrder(order: Order): Promise<void> {
   const text = buildBaristaMessage(order);
-  const chatIds = getBaristaChatIds();
+  const chatIds = await getBaristaChatIds();
   for (const chatId of chatIds) {
     try {
       await bot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });
@@ -56,7 +56,7 @@ export async function notifyClientOrderReady(order: Order): Promise<void> {
 export async function notifyBaristasOrderCancelled(order: Order): Promise<void> {
   const items = order.items.map((item) => `• ${item.qty}× ${item.name}`).join('\n');
   const text = `❌ <b>Заказ №${order.number} отменён клиентом</b>\n${items || '—'}\nСумма была: ${formatMoney(order.total)}`;
-  const chatIds = getBaristaChatIds();
+  const chatIds = await getBaristaChatIds();
   for (const chatId of chatIds) {
     try {
       await bot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });
@@ -81,7 +81,7 @@ export async function notifyClientOrderCancelled(order: Order): Promise<void> {
 
 export async function notifyBaristasOrderReady(order: Order): Promise<void> {
   const text = `☕ <b>Заказ №${order.number} готов к выдаче</b>\nКлиент: ${clientInfo(order)}\nСумма: ${formatMoney(order.total)}`;
-  const chatIds = getBaristaChatIds();
+  const chatIds = await getBaristaChatIds();
   for (const chatId of chatIds) {
     try {
       await bot.api.sendMessage(chatId, text, { parse_mode: 'HTML' });

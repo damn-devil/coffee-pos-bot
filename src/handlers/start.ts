@@ -1,6 +1,6 @@
 import { bot } from '../bot.js';
 import { loadEnv } from '../config.js';
-import { getBaristaChatIds } from '../lib/chatIds.js';
+import { isBarista } from '../lib/baristas.js';
 import { sendOrderWidget } from '../services/widget.js';
 
 const env = loadEnv();
@@ -8,14 +8,23 @@ const env = loadEnv();
 export function registerStartHandlers(): void {
   bot.command('start', async (ctx) => {
     const chatId = ctx.chat?.id;
-    const isBarista = chatId !== undefined && getBaristaChatIds().includes(chatId);
+    const baristaOk = chatId !== undefined && (await isBarista(chatId));
 
-    if (isBarista) {
+    if (baristaOk) {
+      let editorUrl = '';
+      try {
+        editorUrl = new URL(env.MINI_APP_ORDERS_URL).origin + '/menu-editor';
+      } catch {
+        editorUrl = 'https://coffee-pos-bot.onrender.com/menu-editor';
+      }
       await ctx.reply(
         '📋 Панель бариста.\n\nНажмите кнопку ниже, чтобы открыть список активных заказов с таймерами.',
         {
           reply_markup: {
-            inline_keyboard: [[{ text: '📦 Мои заказы', web_app: { url: env.MINI_APP_ORDERS_URL } }]],
+            inline_keyboard: [
+              [{ text: '📦 Мои заказы', web_app: { url: env.MINI_APP_ORDERS_URL } }],
+              [{ text: '📝 Редактировать меню', web_app: { url: editorUrl } }],
+            ],
           },
         },
       );

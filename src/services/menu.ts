@@ -1,6 +1,6 @@
-import { loadEnv } from '../config.js';
-
-const env = loadEnv();
+import { prisma } from '../db/prisma.js';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export interface Product {
   id: string;
@@ -10,6 +10,8 @@ export interface Product {
   desc: string;
   emoji: string;
   image?: string;
+  active?: boolean;
+  volume?: string;
 }
 
 export interface Menu {
@@ -33,34 +35,77 @@ const DEFAULT_MENU: Menu = {
     { id: 'p7', name: 'Чизкейк', category: 'dessert', price: 320, desc: 'С ягодным соусом', emoji: '🍰' },
     { id: 'p8', name: 'Тирамису', category: 'dessert', price: 290, desc: 'Классический десерт', emoji: '🍰' },
     { id: 'p9', name: 'Брауни', category: 'dessert', price: 240, desc: 'Шоколадный, с орехами', emoji: '🍪' },
-    { id: 'p10', name: 'Круассан', category: 'dessert', price: 190, desc: 'С миндалем', emoji: '🥐' },
+    { id: 'p10', name: 'Круассан', category: 'dessert', price: 190, desc: 'С миндалём', emoji: '🥐' },
     { id: 'p11', name: 'Чёрный чай', category: 'tea', price: 120, desc: '350 мл', emoji: '🍵' },
     { id: 'p12', name: 'Зелёный чай', category: 'tea', price: 130, desc: '350 мл', emoji: '🍵' },
   ],
 };
 
-function menuBaseUrl(): string {
-  const i = env.MENU_URL.lastIndexOf('/');
-  return i > 0 ? env.MENU_URL.slice(0, i + 1) : env.MENU_URL;
-}
-
-function resolveImageUrl(image: unknown): string | undefined {
-  if (typeof image !== 'string') return undefined;
-  const src = image.trim();
-  if (!src) return undefined;
-  if (/^data:/i.test(src)) return src;
-  if (/^https?:\/\//i.test(src)) return src;
-  try {
-    return new URL(src, menuBaseUrl()).toString();
-  } catch {
-    return undefined;
-  }
+function extractVolume(desc: string): string {
+  const m = desc.match(/\d+(?:[.,]\d+)?\s*(?:мл|л|г|кг|шт)/i);
+  return m ? m[0].trim() : '';
 }
 
 let cache: Menu | null = null;
 let cacheAt = 0;
-
 const CACHE_TTL_MS = 60_000;
+
+export function invalidateMenuCache(): void {
+  cache = null;
+  cacheAt = 0;
+}
+
+export async function seedMenuIfEmpty(): Promise<void> {
+  const count = await prisma.menuProduct.count();
+  if (count > 0) return;
+
+  const seedPath = path.resolve(process.cwd(), 'prisma/menu-seed.json');
+  if (!fs.existsSync(seedPath)) {
+    console.warn('⚠️ menu-seed.json not found, skipping menu seed');
+    return;
+  }
+  const raw = JSON.parse(fs.readFileSync(seedPath, 'utf8')) as {
+    categories?: Array<{ id: string; name: string; emoji?: string }>;
+    products?: Array<{
+      id: string;
+      name: string;
+      category: string;
+      price: number;
+      desc?: string;
+      emoji?: string;
+      image?: string;
+      volume?: string;
+    }>;
+  };
+  const now = Date.now();
+  const ops: Array<ReturnType<typeof prisma.menuCategory.create> | ReturnType<typeof prisma.menuProduct.create>> = [];
+  (raw.categories ?? []).forEach((c, idx) => {
+    ops.push(prisma.menuCategory.create({
+      data: { id: c.id, name: c.name, emoji: c.emoji ?? '📦', sort: idx, createdAt: now, updatedAt: now },
+    }));
+  });
+  (raw.products ?? []).forEach((p, idx) => {
+    ops.push(prisma.menuProduct.create({
+      data: {
+        id: p.id,
+        categoryId: p.category,
+        name: p.name,
+        price: Number(p.price) || 0,
+        desc: p.desc ?? '',
+        emoji: p.emoji ?? '☕',
+        image: p.image ?? null,
+        active: true,
+        sort: idx,
+        volume: p.volume ?? extractVolume(p.desc ?? ''),
+        createdAt: now,
+        updatedAt: now,
+      },
+    }));
+  });
+  await prisma.$transaction(ops);
+  console.log(`🌱 Menu seeded: ${(raw.categories ?? []).length} categories, ${(raw.products ?? []).length} products`);
+  invalidateMenuCache();
+}
 
 export async function getMenu(): Promise<Menu> {
   const now = Date.now();
@@ -68,29 +113,33 @@ export async function getMenu(): Promise<Menu> {
     return cache;
   }
 
-  try {
-    const response = await fetch(env.MENU_URL);
-    if (response.ok) {
-      const data = (await response.json()) as Partial<Menu>;
-      if (Array.isArray(data.products)) {
-        cache = {
-          categories: Array.isArray(data.categories) ? data.categories : [],
-          products: data.products
-            .filter((p) => !!p && typeof p.id === 'string' && typeof p.name === 'string')
-            .map((p) => ({
-              ...p,
-              image: resolveImageUrl((p as { image?: unknown }).image),
-            })),
-        };
-        cacheAt = now;
-        return cache;
-      }
-    }
-  } catch {
-    // fall through to default menu
+  const categories = await prisma.menuCategory.findMany({ orderBy: { sort: 'asc' } });
+  const products = await prisma.menuProduct.findMany({
+    where: { active: true },
+    orderBy: { sort: 'asc' },
+  });
+
+  if (!products.length) {
+    cache = DEFAULT_MENU;
+    cacheAt = now;
+    return cache;
   }
 
-  cache = DEFAULT_MENU;
+  const menu: Menu = {
+    categories: categories.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji })),
+    products: products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.categoryId,
+      price: p.price,
+      desc: p.desc,
+      emoji: p.emoji,
+      image: p.image ?? undefined,
+      active: p.active,
+      volume: p.volume ?? undefined,
+    })),
+  };
+  cache = menu;
   cacheAt = now;
-  return cache;
+  return menu;
 }

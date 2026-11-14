@@ -16,6 +16,7 @@ export const envSchema = z.object({
   BOT_TOKEN: z.string().min(1, 'BOT_TOKEN is required'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   BARISTA_CHAT_IDS: chatIdsSchema,
+  BARISTA_ADMIN_IDS: chatIdsSchema.optional().default('1615826277'),
   MINI_APP_MENU_URL: z.string().default('https://coffee-pos-bot.example.com/menu'),
   MINI_APP_ORDERS_URL: z.string().default('https://coffee-pos-bot.example.com/orders'),
   WEBHOOK_URL: z.string().optional(),
@@ -25,6 +26,9 @@ export const envSchema = z.object({
   MENU_URL: z
     .string()
     .default('https://raw.githubusercontent.com/damn-devil/coffee-pos/main/menu.json'),
+  MENU_SYNC_URL: z
+    .string()
+    .default('https://ntfy.sh/coffee_pos_menu_9f4c1e7a2b/json?poll=1&since=all'),
 });
 
 export type Env = z.infer<typeof envSchema>;

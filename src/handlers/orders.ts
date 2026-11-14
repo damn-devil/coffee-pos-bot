@@ -1,13 +1,13 @@
 import { bot } from '../bot.js';
 import { listActiveOrders } from '../db/orders.js';
-import { getBaristaChatIds } from '../lib/chatIds.js';
+import { isBarista } from '../lib/baristas.js';
 import { formatMoney, paymentLabel } from '../lib/format.js';
 
 export function registerBaristaOrdersHandlers(): void {
   bot.command('orders', async (ctx) => {
     const chatId = ctx.chat?.id;
-    const isBarista = chatId !== undefined && getBaristaChatIds().includes(chatId);
-    if (!isBarista) {
+    const baristaOk = chatId !== undefined && (await isBarista(chatId));
+    if (!baristaOk) {
       await ctx.reply('❌ Команда доступна только баристам.', { parse_mode: 'HTML' });
       return;
     }
