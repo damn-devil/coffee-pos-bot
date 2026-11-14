@@ -2,13 +2,20 @@ name: Keepalive
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Render service so it does not sleep
+      - name: Ping Render service (retry up to 3x)
         run: |
-          curl -fsS --max-time 60 https://coffee-pos-bot.onrender.com/health || true
+          for attempt in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://coffee-pos-bot.onrender.com/health || echo "000")
+            echo "attempt=$attempt code=$code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 20
+          done
+          echo "WARNING: service did not respond 200"
+          exit 0
