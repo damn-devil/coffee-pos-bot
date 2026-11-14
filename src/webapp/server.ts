@@ -78,8 +78,16 @@ export function createApp(): Express {
     res.sendFile(path.resolve(process.cwd(), 'public/menu.html'));
   });
 
+  app.get('/barista', (_req: Request, res: Response) => {
+    res.sendFile(path.resolve(process.cwd(), 'public/barista.html'));
+  });
+
+  // Backwards-compatible aliases for older cached mini app URLs
   app.get('/menu-editor', (_req: Request, res: Response) => {
-    res.sendFile(path.resolve(process.cwd(), 'public/menu-editor.html'));
+    res.sendFile(path.resolve(process.cwd(), 'public/barista.html'));
+  });
+  app.get('/orders', (_req: Request, res: Response) => {
+    res.sendFile(path.resolve(process.cwd(), 'public/barista.html'));
   });
 
   // ===== Barista menu editor API (barista only) =====
@@ -257,9 +265,7 @@ export function createApp(): Express {
     res.json({ ok: true });
   });
 
-  app.get('/orders', (_req: Request, res: Response) => {
-    res.sendFile(path.resolve(process.cwd(), 'public/orders.html'));
-  });
+  // (old /orders route removed; /barista is the single barista mini app)
 
   // ===== Admin: barista management (admin only) =====
   app.get('/api/admin/baristas', async (req: Request, res: Response) => {

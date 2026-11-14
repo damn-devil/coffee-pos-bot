@@ -11,19 +11,18 @@ export function registerStartHandlers(): void {
     const baristaOk = chatId !== undefined && (await isBarista(chatId));
 
     if (baristaOk) {
-      let editorUrl = '';
+      let baristaUrl = '';
       try {
-        editorUrl = new URL(env.MINI_APP_ORDERS_URL).origin + '/menu-editor';
+        baristaUrl = new URL(env.MINI_APP_ORDERS_URL).origin + '/barista';
       } catch {
-        editorUrl = 'https://coffee-pos-bot.onrender.com/menu-editor';
+        baristaUrl = 'https://coffee-pos-bot.onrender.com/barista';
       }
       await ctx.reply(
-        '📋 Панель бариста.\n\nНажмите кнопку ниже, чтобы открыть список активных заказов с таймерами.',
+        '📋 Панель бариста.\n\nНажмите кнопку, чтобы открыть список активных заказов и редактор меню.',
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: '📦 Мои заказы', web_app: { url: env.MINI_APP_ORDERS_URL } }],
-              [{ text: '📝 Редактировать меню', web_app: { url: editorUrl } }],
+              [{ text: '📋 Панель бариста', web_app: { url: baristaUrl } }],
             ],
           },
         },
