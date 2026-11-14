@@ -384,23 +384,9 @@ init();
 
 // ===== Editor =====
 
-const tg = window.Telegram && window.Telegram.WebApp;
-const $ = (id) => document.getElementById(id);
-
-// Gate: this page is only for Telegram inside a barista flow; otherwise show a minimal hint.
-const headers = () => ({ 'Content-Type': 'application/json', 'X-Telegram-Init-Data': (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || '' });
-
-
 let menu = { categories: [], products: [] };
 let editId = null;
 let imageData = null;
-
-if (tg) {
-  tg.ready();
-  if (tg.setHeaderColor) tg.setHeaderColor('#17100b');
-  if (tg.setBackgroundColor) tg.setBackgroundColor('#17100b');
-  if (tg.expand) tg.expand();
-}
 
 function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function money(n) { return Number(n || 0).toLocaleString('ru-RU') + ' Br'; }
