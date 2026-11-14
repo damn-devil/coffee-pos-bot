@@ -178,11 +178,19 @@
   .hidden { display:none !important; }
   .view { display:flex; flex-direction:column; }
 
+
+  .bic { width:44px;height:44px; display:inline-flex; color:#f6e8d8; }
+  .tic { width:18px;height:18px; display:inline-flex; vertical-align:-3px; }
+  .tab-ic { width:22px;height:22px; display:inline-flex; }
+  .pic { width:20px;height:20px; display:inline-flex; vertical-align:-4px; }
+  .fab-ic { width:22px;height:22px; }
+  .empty-cake { width:44px;height:44px; margin-bottom:10px; color:var(--caramel); }
+
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="brand-mark">☕</div>
+  <div class="brand-mark"><span class="bic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 10h2a3 3 0 0 1 3 3v1a5 5 0 0 1-5 5H6a5 5 0 0 1-5-5v-1a3 3 0 0 1 3-3h13z"/><path d="M6 21h12M9 6c0-1 .8-1 .8-2M12.5 6c0-1 .8-1 .8-2M16 6c0-1 .8-1 .8-2"/></svg></span></div>
   <div>
     <h1>Панель бариста</h1>
     <p>KAVA · выдача & меню</p>
@@ -191,8 +199,8 @@
 </div>
 
 <div class="view-tabs">
-  <button class="view-tab active" id="tab-orders">📋 Заказы</button>
-  <button class="view-tab" id="tab-menu">📝 Редактировать</button>
+  <button class="view-tab active" id="tab-orders"><span class="tab-ic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg></span> Заказы</button>
+  <button class="view-tab" id="tab-menu"><span class="tab-ic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg></span> Редактировать</button>
 </div>
 
 <div id="view-orders" class="view">
@@ -211,28 +219,28 @@
 <div id="empty" class="empty-state hidden" style="display:none"></div>
 
 <section class="barista-admin hidden" id="barista-admin-section" style="display:none">
-  <h3>👥 Бариста <span style="font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">только для админа</span></h3>
+  <h3><span class="tic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-4 3-7 6-7s6 3 6 7"/><path d="M16 4.4a3.2 3.2 0 0 1 0 6.2"/><path d="M17.5 13.6c2.5.6 3.9 2.4 3.9 6.4"/></svg></span> Бариста <span style="font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">только для админа</span></h3>
   <p>Добавьте Telegram ID бариста — он получит уведомления о заказах и доступ к панели.</p>
   <div id="barista-list"></div>
   <div class="admin-add-row">
     <input id="barista-add-id" inputmode="numeric" placeholder="Telegram ID, напр. 7760685021" />
     <input id="barista-add-name" placeholder="Имя (необязательно)" maxlength="120" />
-    <button id="barista-add-btn" class="btn btn-primary">Добавить баристу</button>
+    <button id="barista-add-btn" class="btn btn-primary"><span class="tic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span> Добавить баристу</button>
   </div>
 </section>
 </div>
 
-<button class="fab" id="add-product-btn">➕ Добавить товар</button>
+<button class="fab" id="add-product-btn"><span class="tic fab-ic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span> Добавить товар</button>
 
 <div class="overlay" id="product-overlay">
   <div class="sheet">
     <div class="grabber"></div>
     <h3 id="sheet-title">Новый товар</h3>
     <div class="img-picker">
-      <div class="img-preview" id="img-preview">📷</div>
+      <div class="img-preview" id="img-preview"><span class="tic" style="width:34px;height:34px"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="12" cy="12.5" r="4"/></svg></span></div>
       <div class="img-actions">
-        <button class="btn btn-ghost" id="pick-image-btn">🖼 Выбрать фото</button>
-        <button class="btn btn-ghost" id="remove-image-btn" style="display:none">🗑 Удалить фото</button>
+        <button class="btn btn-ghost" id="pick-image-btn"><span class="tic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.4"/><path d="M3 17l6-6 7 7 4-4 1 1"/></svg></span> Выбрать фото</button>
+        <button class="btn btn-ghost" id="remove-image-btn" style="display:none"><span class="tic"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V4h6v3"/></svg></span> Удалить фото</button>
         <input type="file" id="image-input" accept="image/*" style="display:none">
       </div>
     </div>
@@ -241,7 +249,7 @@
       <div class="field"><label for="f-price">Цена, Br</label><input id="f-price" type="number" inputmode="decimal" min="0" step="0.1" placeholder="4.5"></div>
       <div class="field"><label for="f-volume">Граммовка / объём</label><input id="f-volume" placeholder="250 мл" maxlength="40"></div>
     </div>
-    <div class="field"><label for="f-emoji">Эмодзи</label><input id="f-emoji" placeholder="☕" maxlength="4"></div>
+    <div class="field"><label for="f-emoji">Эмодзи</label><input id="f-emoji" placeholder="испр. ☕" maxlength="4"></div>
     <div class="field"><label for="f-category">Категория</label><select id="f-category"></select></div>
     <div class="field"><label for="f-desc">Описание (необязательно)</label><input id="f-desc" placeholder="Кофе с молочной пеной" maxlength="300"></div>
     <div class="row2">
@@ -256,7 +264,7 @@
     <div class="grabber"></div>
     <h3 id="category-title">Категория</h3>
     <div class="row2">
-      <div class="field" style="max-width:110px"><label for="c-emoji">Эмодзи</label><input id="c-emoji" placeholder="☕" maxlength="4"></div>
+      <div class="field" style="max-width:110px"><label for="c-emoji">Эмодзи</label><input id="c-emoji" placeholder="испр. ☕" maxlength="4"></div>
       <div class="field"><label for="c-name">Название</label><input id="c-name" placeholder="Кофе" maxlength="60"></div>
     </div>
     <div class="row2">
@@ -273,15 +281,24 @@ const tg = window.Telegram && window.Telegram.WebApp;
 const $ = (id) => document.getElementById(id);
 
 // Gate: iframe outside of Telegram shows nothing but the hint
-if (!tg || !tg.initData) {
-  document.body.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;gap:16px;background:#17100b;color:#f6e8d8;font-family:'Fraunces',serif;padding:32px;text-align:center">
-      <div style="font-size:44px">☕</div>
-      <h1 style="font-size:22px;margin:0">Панель бариста</h1>
-      <p style="margin:0;color:#a98a76;font-size:14px;line-height:1.5">Откройте бота <b>@sakavik_kava_bot</b><br/>и нажмите <b>📋 Панель бариста</b></p>
-    </div>`;
+// Gate: no initData means the page is not running inside Telegram — show a muted overlay.
+const _gate = !tg || !tg.initData;
+if (_gate) {
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="open-in-telegram" style="position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(23,16,11,.82);backdrop-filter:blur(6px);font-family:'Fraunces',serif;color:#f6e8d8;text-align:center;padding:28px">
+      <div><svg viewBox="0 0 24 24" width="54" height="54" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 10h2a3 3 0 0 1 3 3v1a5 5 0 0 1-5 5H6a5 5 0 0 1-5-5v-1a3 3 0 0 1 3-3h13z"/><path d="M6 21h12M9 6c0-1 .8-1 .8-2M12.5 6c0-1 .8-1 .8-2M16 6c0-1 .8-1 .8-2"/></svg></div>
+      <h1 style="font-size:22px;margin:0">Только в Telegram</h1>
+      <p style="margin:0;color:#a98a76;font-size:13.5px;line-height:1.55;max-width:320px">Откройте бота <b>@sakavik_kava_bot</b> и нажмите <b>Панель бариста</b></p>
+    </div>`);
 }
 
+
+const _eyeIco = '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const _eyeOff = '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.2A10.9 10.9 0 0 1 12 4c6.5 0 10 8 10 8a17 17 0 0 1-2.3 3.6"/><path d="M6.1 6.3A17 17 0 0 0 2 12s3.5 8 10 8c1.7 0 3.1-.5 4.4-1.3"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
+const _cashIco = '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="5" width="21" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><line x1="6" y1="10" x2="6" y2="10.01"/><line x1="18" y1="10" x2="18" y2="10.01"/><line x1="6" y1="14" x2="6" y2="14.01"/><line x1="18" y1="14" x2="18" y2="14.01"/></svg>';
+const _cardIco = '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="5" width="21" height="14" rx="2"/><line x1="1.5" y1="10" x2="22.5" y2="10"/><line x1="5" y1="15" x2="9" y2="15"/></svg>';
+const _clipIco = '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg>';
+const _memoIco = '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg>';
 const headers = () => ({ 'Content-Type': 'application/json', 'X-Telegram-Init-Data': (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || '' });
 
 async function api(path, opts) {
@@ -343,7 +360,7 @@ function renderOrders() {
           <div class="status ${statusClass}">${o.status === 'new' ? 'Новый' : (o.status === 'preparing' ? 'Готовится' : 'Выдан')}</div>
         </div>
         <div class="items">${items}</div>
-        <div class="meta"><span>Итого <b>${money(o.total)}</b></span><span>${o.payment === 'cash' ? '💵 Наличные' : '💳 Карта'}</span></div>
+        <div class="meta"><span>Итого <b>${money(o.total)}</b></span><span>${o.payment === 'cash' ? '<span class="pic">'+_cashIco+'</span> Наличные' : '<span class="pic">'+_cardIco+'</span> Карта'}</span></div>
         <div class="countdown ${due && o.status !== 'ready' ? 'due' : ''}">
           <span>Осталось до готовности</span>
           <span class="time" data-countdown-for="${o.number}">${fmtCountdown(remaining)}</span>
@@ -433,8 +450,8 @@ function render() {
           <span class="cat-emoji">${esc(cat.emoji)}</span>
           <span class="cat-name">${esc(cat.name)}</span>
           <button class="icon-btn" data-add-to-cat="${cat.id}" title="Добавить товар в категорию">➕</button>
-          <button class="icon-btn" data-edit-cat="${cat.id}" title="Переименовать">✏️</button>
-          <button class="icon-btn danger" data-del-cat="${cat.id}" title="Удалить категорию">🗑</button>
+          <button class="icon-btn" data-edit-cat="${cat.id}" title="Переименовать"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L8 20l-5 1 1-5L17 3z"/></svg></button>
+          <button class="icon-btn danger" data-del-cat="${cat.id}" title="Удалить категорию"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V4h6v3"/></svg></button>
         </div>
         ${items.length ? items.map((p) => `
           <div class="product ${p.active === false ? 'p-off' : ''}">
@@ -444,9 +461,9 @@ function render() {
               ${p.desc ? `<div class="p-desc">${esc(p.desc)}</div>` : ''}
               <div class="p-meta">${money(p.price)}${p.volume ? ` · ${esc(p.volume)}` : ''}</div>
             </div>
-            <button class="icon-btn" data-toggle-active="${p.id}" title="${p.active === false ? 'Вернуть в меню' : 'Скрыть от гостей'}">${p.active === false ? '🙈' : '👁️'}</button>
-            <button class="icon-btn" data-edit-prod="${p.id}" title="Редактировать">✏️</button>
-            <button class="icon-btn danger" data-del-prod="${p.id}" title="Удалить">🗑</button>
+            <button class="icon-btn" data-toggle-active="${p.id}" title="${p.active === false ? 'Вернуть в меню' : 'Скрыть от гостей'}">${p.active === false ? _eyeOff : _eyeIco}</button>
+            <button class="icon-btn" data-edit-prod="${p.id}" title="Редактировать"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L8 20l-5 1 1-5L17 3z"/></svg></button>
+            <button class="icon-btn danger" data-del-prod="${p.id}" title="Удалить"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V4h6v3"/></svg></button>
           </div>`).join('') : `<div class="empty-state" style="padding:16px">Пусто. Нажмите ➕ чтобы добавить товар</div>`}
       </section>`;
   }).join('') + `
@@ -479,7 +496,7 @@ function setImagePreview(dataUri) {
     rm.style.display = 'block';
   } else {
     const img = $('img-preview');
-    img.outerHTML = `<div class="img-preview" id="img-preview">📷</div>`;
+    img.outerHTML = `<div class="img-preview" id="img-preview"><span class="tic" style="width:34px;height:34px"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="12" cy="12.5" r="4"/></svg></span></div>`;
     rm.style.display = 'none';
   }
 }
@@ -491,7 +508,7 @@ function openProductSheet(id, presetCategory) {
   $('sheet-title').textContent = p ? 'Редактировать товар' : 'Новый товар';
   $('f-name').value = p ? p.name : '';
   $('f-price').value = p ? p.price : '';
-  $('f-emoji').value = p ? p.emoji : '☕';
+  $('f-emoji').value = p ? p.emoji : '';
   $('f-desc').value = p ? (p.desc || '') : '';
   $('f-volume').value = p ? (p.volume || '') : '';
   fillCategorySelect(p ? p.categoryId : (presetCategory || (menu.categories[0] && menu.categories[0].id) || ''));
@@ -514,7 +531,7 @@ async function saveProduct() {
     name,
     price,
     desc: $('f-desc').value.trim(),
-    emoji: ($('f-emoji').value || '☕').trim(),
+    emoji: ($('f-emoji').value || '').trim(),
     categoryId: $('f-category').value,
     volume: $('f-volume').value.trim(),
     image: imageData,
@@ -563,14 +580,14 @@ function openCategorySheet(id) {
   const c = id ? menu.categories.find((x) => x.id === id) : null;
   $('category-title').textContent = c ? 'Редактировать категорию' : 'Новая категория';
   $('c-name').value = c ? c.name : '';
-  $('c-emoji').value = c ? c.emoji : '☕';
+  $('c-emoji').value = c ? c.emoji : '';
   $('category-overlay').classList.add('open');
 }
 
 async function saveCategory() {
   const name = $('c-name').value.trim();
   if (!name) { toast('Введите название категории'); return; }
-  const payload = { name, emoji: ($('c-emoji').value || '📦').trim() };
+  const payload = { name, emoji: ($('c-emoji').value || '').trim() };
   try {
     if (editCategoryId) await api('/api/barista/menu/categories/' + encodeURIComponent(editCategoryId), { method: 'PUT', body: JSON.stringify(payload) });
     else await api('/api/barista/menu/categories', { method: 'POST', body: JSON.stringify(payload) });
@@ -661,7 +678,7 @@ async function loadBaristas() {
         </div>
         ${b.role === 'admin'
           ? '<span class="b-role">админ</span>'
-          : `<button class="icon-btn danger" data-remove-barista="${b.id}" title="Удалить баристу">🗑</button>`}
+          : `<button class="icon-btn danger" data-remove-barista="${b.id}" title="Удалить баристу"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V4h6v3"/></svg></button>`}
       </div>`).join('');
     $('barista-list').querySelectorAll('[data-remove-barista]').forEach((btn) => {
       btn.addEventListener('click', () => removeBaristaUI(Number(btn.dataset.removeBarista)));
