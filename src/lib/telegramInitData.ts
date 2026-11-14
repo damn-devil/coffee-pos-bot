@@ -30,6 +30,14 @@ export function verifyTelegramInitData(initData: string | undefined): VerifiedTe
   const hash = params.get('hash');
   if (!hash) return null;
 
+  const authDateRaw = params.get('auth_date');
+  const authDate = Number(authDateRaw);
+  if (!Number.isFinite(authDate) || authDate < 0) return null;
+  const ageSeconds = Date.now() / 1000 - authDate;
+  if (ageSeconds > 3600 || ageSeconds < -300) {
+    return null;
+  }
+
   const entries = [...params.entries()].filter(([key]) => key !== 'hash');
   entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   const dataCheckString = entries.map(([key, value]) => `${key}=${value}`).join('\n');
@@ -48,7 +56,6 @@ export function verifyTelegramInitData(initData: string | undefined): VerifiedTe
   try {
     const user = JSON.parse(userJson) as TelegramInitDataUser & { id?: unknown };
     if (!user || typeof user.id !== 'number' || !Number.isFinite(user.id)) return null;
-    const authDate = Number(params.get('auth_date')) || 0;
     return {
       user: { id: user.id, first_name: user.first_name, last_name: user.last_name, username: user.username },
       authDate,

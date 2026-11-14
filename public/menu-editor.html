@@ -179,6 +179,18 @@
 const tg = window.Telegram && window.Telegram.WebApp;
 const $ = (id) => document.getElementById(id);
 
+// Gate: this page is only for Telegram inside a barista flow; otherwise show a minimal hint.
+if (!tg || !tg.initData) {
+  document.body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;gap:16px;background:#17100b;color:#f6e8d8;font-family:'Fraunces',serif;padding:32px;text-align:center">
+      <div style="font-size:44px">☕</div>
+      <h1 style="font-size:22px;margin:0">Редактор меню</h1>
+      <p style="margin:0;color:#a98a76;font-size:14px;line-height:1.5">Откройте бота <b>@sakavik_kava_bot</b><br/>и нажмите <b>📝 Редактировать меню</b></p>
+    </div>`;
+}
+
+const headers = () => ({ 'Content-Type': 'application/json', 'X-Telegram-Init-Data': (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || '' });
+
 const headers = () => ({ 'Content-Type': 'application/json', 'X-Telegram-Init-Data': (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || '' });
 
 let menu = { categories: [], products: [] };

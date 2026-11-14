@@ -318,6 +318,19 @@ export function createApp(): Express {
       res.status(401).json({ error: 'Unauthorized: telegram initData required' });
       return;
     }
+    const clientId = String(verified.user.id);
+    const RATE_LIMIT = 10; // orders
+    const RATE_WINDOW_SEC = 5 * 60; // 5 minutes
+    const recent = await prisma.order.count({
+      where: {
+        clientTelegramId: clientId,
+        createdAt: { gte: BigInt(Date.now() - RATE_WINDOW_SEC * 1000) },
+      },
+    });
+    if (recent >= RATE_LIMIT) {
+      res.status(429).json({ error: 'Слишком много заказов за короткое время. Попробуйте через минуту.' });
+      return;
+    }
     const parsed = clientOrderSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'Invalid order payload' });
